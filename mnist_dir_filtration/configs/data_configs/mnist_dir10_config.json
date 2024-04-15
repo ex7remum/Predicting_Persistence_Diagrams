@@ -1,0 +1,13 @@
+{
+    "dataset_type" : "MNIST",
+    "data_path": "RAW/MNIST",
+    "filtration_func": {
+        "type": "process_image",
+        "args": {
+            "num_filtrations": 10,
+            "filter_type": "uniform"
+            }
+        },
+    "limit": 10,
+    "filtration_path_name": "PD/direction/10/"
+}

@@ -7,13 +7,15 @@ import datasets
 import utils
 import models
 import losses
+import collate_fn
 
 def val_step(model, valloader, device):
     model.eval()
     metric_chamfer = 0.
     metric_hausdorff = 0.
     val_len = len(valloader.dataset)
-    for X, Z, v in valloader:
+    for item in valloader:
+        X, Z, v = item['items'], item['pds'], item['labels']
         with torch.no_grad():
             Z = Z[..., :2].to(torch.float32).to(device)
             Z_hat = model(X.to(device))
@@ -27,7 +29,8 @@ def train_loop(model, trainloader, valloader, optimizer, loss_fn, device, schedu
     
     for _ in range(n_epochs):
         model.train()
-        for X, Z, v in trainloader:
+        for item in trainloader:
+            X, Z, v = item['items'], item['pds'], item['labels']
             optimizer.zero_grad()
             
             Z = Z[..., :2].to(torch.float32).to(device)
@@ -82,11 +85,13 @@ if __name__ == "__main__":
     
     train_dataset = getattr(datasets, config['data']['train']['dataset']['type'])(**config['data']['train']['dataset']['args'])
     test_dataset = getattr(datasets, config['data']['test']['dataset']['type'])(**config['data']['test']['dataset']['args'])
+    
+    collator = getattr(collate_fn, config['collator']['type'])
 
     trainloader = DataLoader(train_dataset, batch_size=config['data']['train']['batch_size'], 
-                             num_workers=config['data']['train']['num_workers'], shuffle=True, drop_last=True)
+                             num_workers=config['data']['train']['num_workers'], shuffle=True, drop_last=True, collate_fn=collator)
     testloader = DataLoader(test_dataset, batch_size=config['data']['test']['batch_size'], 
-                            num_workers=config['data']['test']['num_workers'], shuffle=False)
+                            num_workers=config['data']['test']['num_workers'], shuffle=False, collate_fn=collator)
 
     
     model = getattr(models, config['arch']['type'])(**config['arch']['args']).to(device)

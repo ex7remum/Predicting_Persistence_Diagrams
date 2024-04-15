@@ -18,7 +18,8 @@
               "args": {
                   "data_dir": "RAW/MNIST",
                   "pd_dir": "PD/direction/10/MNIST_pds.pkl",
-                  "train": true
+                  "train": true,
+                  "leave": 32
               }
           }
       },
@@ -30,7 +31,8 @@
               "args": {
                   "data_dir": "RAW/MNIST",
                   "pd_dir": "PD/direction/10/MNIST_pds_test.pkl",
-                  "train": false
+                  "train": false,
+                  "leave": 32
               }
           }
       }
@@ -62,5 +64,8 @@
         "wandb_project": "mnist_pds",
         "run_name": "mnist_10_filt_fixed_full",
         "grad_norm_clip": 10
+    },
+    "collator": {
+       "type": collate_fn   
     }
 }

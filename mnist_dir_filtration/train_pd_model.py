@@ -8,6 +8,7 @@ import utils
 import models
 import losses
 import collate_fn
+import os
 
 def val_step(model, valloader, device):
     model.eval()
@@ -97,13 +98,13 @@ if __name__ == "__main__":
     model = getattr(models, config['arch']['type'])(**config['arch']['args']).to(device)
     
     optimizer = getattr(torch.optim, config['optimizer']['type'])(model.parameters(), **config['optimizer']['args'])
-    scheduler = getattr(torch.optim.lr_scheduler, config['lr_scheduler']['type'])(config, **config['lr_scheduler']['args'])
+    scheduler = getattr(torch.optim.lr_scheduler, config['lr_scheduler']['type'])(optimizer, **config['lr_scheduler']['args'])
 
     loss_fn = getattr(losses, config['loss']['type'])(**config['loss']['args'])
 
     run = config["trainer"]["run_name"]
     wandb.login(key=args.wandb_key)
-    wandb.init(project=config["trainer"]["project_name"], 
+    wandb.init(project=config["trainer"]["wandb_project"], 
                name=f"experiment_{run}",
                config=config
     )
@@ -111,5 +112,6 @@ if __name__ == "__main__":
     final_model = train_loop(model, trainloader, testloader, optimizer, loss_fn, device, 
                              scheduler, n_epochs=config["trainer"]["n_epochs"], clip_norm=config["trainer"]["grad_norm_clip"])
     
+    os.makedirs('pretrained_models', exist_ok=True)
     torch.save(final_model.state_dict(), f'pretrained_models/{run}_model.pth')
     wandb.finish()

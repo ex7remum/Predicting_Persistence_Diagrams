@@ -66,6 +66,6 @@
         "grad_norm_clip": 10
     },
     "collator": {
-       "type": collate_fn   
+       "type": "collate_fn"
     }
 }

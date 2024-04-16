@@ -24,10 +24,10 @@ class BasePDDataset(Dataset):
         pd = self.pds[idx]
         
         if self.leave is not None:
-            if len(pd) >= leave:
+            if len(pd) >= self.leave:
                 lifetime = pd[:, 1] - pd[:, 0]
-                order = torch.argsort(lifetime, descending=Tre)
-                pd = pd[order][:leave]
+                order = torch.argsort(lifetime, descending=True)
+                pd = pd[order][:self.leave]
         
         return {
             'item': item, 

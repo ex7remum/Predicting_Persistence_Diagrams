@@ -31,8 +31,8 @@ def val_step(model, valloader, pimgr, device):
             pie += mse(PI_pred, PI_real)
             
         if log_img:
-            PI_real = PI_real.view(-1, 50, 50)
-            PI_pred = PI_pred.view(-1, 50, 50)
+            PI_real = PI_real.view(-1, 1, 50, 50)
+            PI_pred = PI_pred.view(-1, 1, 50, 50)
             
             PI_real_grid = torchvision.utils.make_grid(PI_real)
             PI_pred_grid = torchvision.utils.make_grid(PI_pred)
@@ -150,10 +150,16 @@ if __name__ == "__main__":
     )
     if 'pimgr' not in config:
         wandb.log({'sigma': sigma, 'min_b': im_range[0], 'max_b': im_range[1], 'min_p': im_range[2], 'max_p': im_range[3]})
+        
+    wandb.watch(model)
 
     final_model = train_loop(model, trainloader, testloader, optimizer, pimgr, device, 
                              scheduler, n_epochs=config["trainer"]["n_epochs"], clip_norm=config["trainer"]["grad_norm_clip"])
     
     os.makedirs('pretrained_models', exist_ok=True)
     torch.save(final_model.state_dict(), f'pretrained_models/{run}_model.pth')
+    
+    metrics = utils.get_metrics(dataloader_train, dataloader_test, 'pi', final_model, pimgr)
+    wandb.log(metrics)
+    
     wandb.finish()

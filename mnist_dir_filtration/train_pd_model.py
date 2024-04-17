@@ -9,6 +9,7 @@ import models
 import losses
 import collate_fn
 import os
+from gudhi.representations.vector_methods import PersistenceImage as PersistenceImageGudhi
 
 def val_step(model, valloader, device):
     model.eval()
@@ -105,6 +106,19 @@ if __name__ == "__main__":
         scheduler = None
 
     loss_fn = getattr(losses, config['loss']['type'])(**config['loss']['args'])
+    
+    
+    if 'pimgr' in config:
+        pimgr = PersistenceImageGudhi(resolution=[50, 50],
+                                      weight=lambda x: x[1],
+                                      **config['pimgr'])
+    else:
+        sigma, im_range = utils.compute_pimgr_parameters(train_dataset.pds)
+        pimgr = PersistenceImageGudhi(bandwidth=sigma,
+                                      resolution=[50, 50],
+                                      weight=lambda x: x[1],
+                                      im_range=im_range)
+        
 
     run = config["trainer"]["run_name"]
     wandb.login(key=args.wandb_key)
@@ -112,10 +126,18 @@ if __name__ == "__main__":
                name=f"experiment_{run}",
                config=config
     )
+    if 'pimgr' not in config:
+        wandb.log({'sigma': sigma, 'min_b': im_range[0], 'max_b': im_range[1], 'min_p': im_range[2], 'max_p': im_range[3]})
+        
+    wandb.watch(model)
 
     final_model = train_loop(model, trainloader, testloader, optimizer, loss_fn, device, 
                              scheduler, n_epochs=config["trainer"]["n_epochs"], clip_norm=config["trainer"]["grad_norm_clip"])
     
     os.makedirs('pretrained_models', exist_ok=True)
     torch.save(final_model.state_dict(), f'pretrained_models/{run}_model.pth')
+    
+    metrics = utils.get_metrics(dataloader_train, dataloader_test, 'pd', final_model, pimgr)
+    wandb.log(metrics)
+    
     wandb.finish()

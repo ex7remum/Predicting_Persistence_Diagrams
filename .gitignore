@@ -107,6 +107,7 @@ saved/
 wandb/
 PD/
 RAW/
+pretrained_models/
 
 # editor, os cache directory
 .vscode/

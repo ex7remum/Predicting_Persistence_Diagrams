@@ -8,6 +8,6 @@
             "filter_type": "uniform"
             }
         },
-    "limit": 10,
+    "limit": 200,
     "filtration_path_name": "PD/direction/10/"
 }

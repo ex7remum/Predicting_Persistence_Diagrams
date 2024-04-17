@@ -6,27 +6,52 @@ import json
 import datasets
 import utils
 import models
-import losses
 import collate_fn
 import os
+from torch.nn import MSELoss, BCELoss
+from gudhi.representations.vector_methods import PersistenceImage as PersistenceImageGudhi
+import torchvision
 
-def val_step(model, valloader, device):
+
+def val_step(model, valloader, pimgr, device):
     model.eval()
-    metric_chamfer = 0.
-    metric_hausdorff = 0.
+    pie = 0.
+    mse = MSELoss(reduction='sum')
     val_len = len(valloader.dataset)
+    
+    log_img = True
+    
     for item in valloader:
         X, Z, v = item['items'], item['pds'], item['labels']
         with torch.no_grad():
-            Z = Z[..., :2].to(torch.float32).to(device)
-            Z_hat = model(X.to(device))
-        
-        metric_chamfer += losses.ChamferLoss(reduce='sum')(Z_hat, Z)
-        metric_hausdorff += losses.HausdorffLoss(reduce='sum')(Z_hat, Z)
-    wandb.log({'val_chamfer': metric_chamfer / val_len, 'val_hausdorff': metric_hausdorff / val_len})
+            Z = Z[..., :2].to(torch.float32)
+            PI_pred = model(X.to(device))
+            PI_real = torch.from_numpy(pimgr.fit_transform(Z)).to(torch.float32).to(device)
+            PI_real = PI_real / PI_real.max(dim=1, keepdim=True)[0]
+            pie += mse(PI_pred, PI_real)
+            
+        if log_img:
+            PI_real = PI_real.view(-1, 50, 50)
+            PI_pred = PI_pred.view(-1, 50, 50)
+            
+            PI_real_grid = torchvision.utils.make_grid(PI_real)
+            PI_pred_grid = torchvision.utils.make_grid(PI_pred)
+            
+            images_real = wandb.Image(PI_real_grid, caption="Real PI")
+            images_pred = wandb.Image(PI_pred_grid, caption="Pred PI")
+            
+            wandb.log({"Real PI": images_real})
+            wandb.log({"Pred PI": images_pred})
+            
+            # log only first batch
+            log_img = False
 
-def train_loop(model, trainloader, valloader, optimizer, loss_fn, device, scheduler=None, n_epochs=25, clip_norm=None):
+    wandb.log({'val_pie': pie / val_len})
+    
+
+def train_loop(model, trainloader, valloader, optimizer, pimgr, device, scheduler=None, n_epochs=25, clip_norm=None):
     torch.manual_seed(0)
+    loss_fn = BCELoss()
     
     for _ in range(n_epochs):
         model.train()
@@ -34,9 +59,12 @@ def train_loop(model, trainloader, valloader, optimizer, loss_fn, device, schedu
             X, Z, v = item['items'], item['pds'], item['labels']
             optimizer.zero_grad()
             
-            Z = Z[..., :2].to(torch.float32).to(device)
-            Z_hat = model(X.to(device))
-            loss = loss_fn(Z_hat, Z)
+            Z = Z[..., :2].to(torch.float32)
+            PI_pred = model(X.to(device))
+            PI_real = torch.from_numpy(pimgr.fit_transform(Z)).to(torch.float32).to(device)
+            PI_real = PI_real / PI_real.max(dim=1, keepdim=True)[0]
+
+            loss = loss_fn(PI_pred, PI_real)
             
             loss.backward()
             
@@ -57,7 +85,7 @@ def train_loop(model, trainloader, valloader, optimizer, loss_fn, device, schedu
             lr = optimizer.param_groups[0]['lr']
             wandb.log({'loss': loss, 'grad_norm': total_norm, 'learning rate': lr})
         
-        val_step(model, valloader, device)
+        val_step(model, valloader, pimgr, device)
     return model
 
 
@@ -93,7 +121,6 @@ if __name__ == "__main__":
                              num_workers=config['data']['train']['num_workers'], shuffle=True, drop_last=True, collate_fn=collator)
     testloader = DataLoader(test_dataset, batch_size=config['data']['test']['batch_size'], 
                             num_workers=config['data']['test']['num_workers'], shuffle=False, collate_fn=collator)
-
     
     model = getattr(models, config['arch']['type'])(**config['arch']['args']).to(device)
     
@@ -104,7 +131,16 @@ if __name__ == "__main__":
     else:
         scheduler = None
 
-    loss_fn = getattr(losses, config['loss']['type'])(**config['loss']['args'])
+    if 'pimgr' in config:
+        pimgr = PersistenceImageGudhi(resolution=[50, 50],
+                                      weight=lambda x: x[1],
+                                      **config['pimgr'])
+    else:
+        sigma, im_range = utils.compute_pimgr_parameters(train_dataset.pds)
+        pimgr = PersistenceImageGudhi(bandwidth=sigma,
+                                      resolution=[50, 50],
+                                      weight=lambda x: x[1],
+                                      im_range=im_range)
 
     run = config["trainer"]["run_name"]
     wandb.login(key=args.wandb_key)
@@ -112,8 +148,10 @@ if __name__ == "__main__":
                name=f"experiment_{run}",
                config=config
     )
+    if 'pimgr' not in config:
+        wandb.log({'sigma': sigma, 'min_b': im_range[0], 'max_b': im_range[1], 'min_p': im_range[2], 'max_p': im_range[3]})
 
-    final_model = train_loop(model, trainloader, testloader, optimizer, loss_fn, device, 
+    final_model = train_loop(model, trainloader, testloader, optimizer, pimgr, device, 
                              scheduler, n_epochs=config["trainer"]["n_epochs"], clip_norm=config["trainer"]["grad_norm_clip"])
     
     os.makedirs('pretrained_models', exist_ok=True)

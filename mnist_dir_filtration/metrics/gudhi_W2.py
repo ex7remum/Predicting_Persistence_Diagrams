@@ -9,6 +9,8 @@ def calc_gudhi_W2_dist(model : nn.Module, dataloader):
     W2 = 0.
     for item in dataloader:
         src_data = item['items']
+        src_pd = item['pds']
+        src_pd = src_pd[..., :2].to(torch.float32)
         tgt_pd = model(src_data.to(device))
         
         for src, tgt in zip(src_pd, tgt_pd):

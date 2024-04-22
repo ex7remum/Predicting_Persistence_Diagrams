@@ -10,6 +10,8 @@ def calc_gudhi_bottleneck_dist(model : nn.Module, dataloader):
     for item in dataloader:
         src_data = item['items']
         tgt_pd = model(src_data.to(device))
+        src_pd = item['pds']
+        src_pd = src_pd[..., :2].to(torch.float32)
         for src, tgt in zip(src_pd, tgt_pd):
             bottleneck += bottleneck_distance(src.cpu(), tgt.cpu())
     bottleneck /= len(dataloader.dataset)

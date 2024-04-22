@@ -17,7 +17,10 @@ def get_metrics(dataloader_train, dataloader_test, model_type, model=None, pimgr
             pie = metrics.calc_pie_from_pi(model, dataloader_test, pimgr)
             res_metrics.update({"PIE" : pie})
         
-    acc_logreg, acc_rfc = metrics.logreg_and_rfc_acc(dataloader_train, dataloader_test, model, pimgr)
+    if model_type == 'pd':
+        acc_logreg, acc_rfc = metrics.logreg_and_rfc_acc(dataloader_train, dataloader_test, model, pimgr)
+    else:
+        acc_logreg, acc_rfc = metrics.logreg_and_rfc_acc(dataloader_train, dataloader_test, model, None)
     res_metrics.update({"logreg_acc" : acc_logreg})
     res_metrics.update({"rfc_acc" : acc_rfc})
     return res_metrics

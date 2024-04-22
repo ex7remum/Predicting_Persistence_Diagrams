@@ -17,7 +17,7 @@ def calc_pie_from_pi(model : nn.Module, dataloader, pimgr):
         PI_real = torch.from_numpy(pimgr.fit_transform(Z)).to(torch.float32).to(device)
         
         PI_real = PI_real / torch.max(PI_real, dim=1, keepdim=True)[0]
-        pie += mse(PI_pred, PI_real)
+        total_pie += mse(PI_pred, PI_real)
        
     return total_pie / len(dataloader.dataset)
 
@@ -41,6 +41,6 @@ def calc_pie_from_pd(model : nn.Module, dataloader, pimgr):
         
         PI_pred = PI_pred / torch.max(PI_pred, dim=1, keepdim=True)[0]
         PI_real = PI_real / torch.max(PI_real, dim=1, keepdim=True)[0]
-        pie += mse(PI_pred, PI_real)
+        total_pie += mse(PI_pred, PI_real)
        
     return total_pie / len(dataloader.dataset)

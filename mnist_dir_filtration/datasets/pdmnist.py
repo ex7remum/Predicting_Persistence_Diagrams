@@ -12,7 +12,7 @@ class PDMnist(BasePDDataset):
         
         transform = transforms.Compose(
                         [transforms.ToTensor(),
-                         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+                         transforms.Normalize((0.5,), (0.5,))])
         self.dataset = torchvision.datasets.MNIST(root=data_dir, train=train, download=True, transform=transform)
         
         with open(pd_dir, 'rb') as f:

@@ -137,7 +137,7 @@ if __name__ == "__main__":
     os.makedirs('pretrained_models', exist_ok=True)
     torch.save(final_model.state_dict(), f'pretrained_models/{run}_model.pth')
     
-    metrics = utils.get_metrics(dataloader_train, dataloader_test, 'pd', final_model, pimgr)
+    metrics = utils.get_metrics(trainloader, testloader, 'pd', final_model, pimgr)
     wandb.log(metrics)
     
     wandb.finish()

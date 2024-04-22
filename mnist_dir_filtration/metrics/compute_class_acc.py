@@ -9,6 +9,7 @@ from sklearn.preprocessing import StandardScaler
 @torch.no_grad()
 def get_items_from_dataloader(dataloader, model=None, pimgr=None):
     data, labels = [], []
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     for item in dataloader:
         X, Z, v = item['items'], item['pds'], item['labels']
@@ -63,4 +64,27 @@ def logreg_and_rfc_acc(dataloader_train, dataloader_test, model=None, pimgr=None
 
     acc_logreg = np.max(accuracies)
     return acc_logreg, acc_rfc
+
+
+# calculate accuracy of classificaiton of some model trained on pds
+@torch.no_grad()
+def calculate_accuracy_on_pd(model_pd : nn.Module, model_class : nn.Module, dataloader, on_real = True):
+    model_pd.eval()
+    model_class.eval()
+    correct = 0.
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    for item in dataloader:
+        X, Z, v = item['items'], item['pds'], item['labels']
+        Z = Z[..., :2].to(torch.float32)
+        
+        if on_real:
+            logits = model_class(Z.to(device))
+        else:
+            PD_pred = model_pd(X.to(device))
+            logits = model_class(PD_pred)
+            
+        correct += (v.to(device) == torch.argmax(logits, axis=1)).sum()
+    correct /= len(dataloader.dataset)
+    return correct.item()
     

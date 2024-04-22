@@ -13,7 +13,7 @@ def calc_inference_time(model : nn.Module, dataloader):
         for item in dataloader:
             src_data = item['items']
             _ = model(src_data.to(device))
-            num_steps += 1
+            num_warmup_steps += 1
             
             if num_warmup_steps >= 1000:
                 break

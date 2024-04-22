@@ -69,8 +69,9 @@ def logreg_and_rfc_acc(dataloader_train, dataloader_test, model=None, pimgr=None
 # calculate accuracy of classificaiton of some model trained on pds
 @torch.no_grad()
 def calculate_accuracy_on_pd(model_pd : nn.Module, model_class : nn.Module, dataloader, on_real = True):
-    model_pd.eval()
     model_class.eval()
+    if model_pd is not None:
+        model_pd.eval()
     correct = 0.
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     

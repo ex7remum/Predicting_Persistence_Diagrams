@@ -46,7 +46,9 @@ class CustomPersformer(nn.Module):
             nn.Linear(64, n_out_enc),
         )
 
-    def forward(self, X, mask):
+    def forward(self, X, mask=None):
+        if mask is None:
+            mask = torch.ones_like(X).to(X.device)[..., 0]
         outputs = self.embedding(X) * math.sqrt(self.embed_dim)
         padding_mask = models.create_padding_mask(mask)
         for layer in self.layers:

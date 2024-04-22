@@ -8,6 +8,7 @@ import utils
 import models
 import losses
 import collate_fn
+import metrics
 import os
 from gudhi.representations.vector_methods import PersistenceImage as PersistenceImageGudhi
 import trainer
@@ -18,21 +19,21 @@ def get_dataloaders(path_to_config):
     train_dataset = getattr(datasets, config['data']['train']['dataset']['type'])(**config['data']['train']['dataset']['args'])
     
     generator = torch.Generator().manual_seed(42)
-    train1_dataset, train2_dataset = torch.utils.random_split(train_dataset, [0.5, 0.5], generator=generator)
+    train1_dataset, train2_dataset = torch.utils.data.dataset.random_split(train_dataset, [0.5, 0.5], generator=generator)
     
     test_dataset = getattr(datasets, config['data']['test']['dataset']['type'])(**config['data']['test']['dataset']['args'])
     
     collator = getattr(collate_fn, config['collator']['type'])
 
-    trainloader1 = DataLoader(train_dataset1, batch_size=config['data']['train']['batch_size'], 
+    trainloader1 = DataLoader(train1_dataset, batch_size=config['data']['train']['batch_size'], 
                              num_workers=config['data']['train']['num_workers'], shuffle=True, drop_last=True, collate_fn=collator)
     
-    trainloader2 = DataLoader(train_dataset2, batch_size=config['data']['train']['batch_size'], 
+    trainloader2 = DataLoader(train2_dataset, batch_size=config['data']['train']['batch_size'], 
                              num_workers=config['data']['train']['num_workers'], shuffle=True, drop_last=True, collate_fn=collator)    
     
     testloader = DataLoader(test_dataset, batch_size=config['data']['test']['batch_size'], 
                             num_workers=config['data']['test']['num_workers'], shuffle=False, collate_fn=collator)
-    return trainloader1, trainloader2, testloader
+    return train1_dataset, train2_dataset, trainloader1, trainloader2, testloader
 
 
 def get_train_model_params(path_to_config):
@@ -56,14 +57,14 @@ def train_class_model(path_to_config, is_real, model_pd, trainloader, testloader
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, optimizer, scheduler = get_train_model_params(path_to_config)
     model = model.to(device)
-    final_model = trainer.train_loop_class(model, trainloader, testloader, optimizer, is_real, device, model_pd
+    final_model = trainer.train_loop_class(model, trainloader, testloader, optimizer, is_real, device, model_pd,
                              scheduler, n_epochs=config["trainer"]["n_epochs"], clip_norm=config["trainer"]["grad_norm_clip"])
     return final_model
 
 
 def run_exp_full(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    trainloader1, trainloader2, testloader = get_dataloaders(args.config)
+    train1_dataset, train2_dataset, trainloader1, trainloader2, testloader = get_dataloaders(args.config)
     model, optimizer, scheduler = get_train_model_params(args.config)
     model = model.to(device)
     
@@ -76,7 +77,7 @@ def run_exp_full(args):
                                       weight=lambda x: x[1],
                                       **config['pimgr'])
     else:
-        sigma, im_range = utils.compute_pimgr_parameters(train_dataset.pds)
+        sigma, im_range = utils.compute_pimgr_parameters(train1_dataset.pds)
         pimgr = PersistenceImageGudhi(bandwidth=sigma,
                                       resolution=[50, 50],
                                       weight=lambda x: x[1],
@@ -98,8 +99,8 @@ def run_exp_full(args):
     os.makedirs('pretrained_models', exist_ok=True)
     torch.save(final_model.state_dict(), f'pretrained_models/{run}_model.pth')
     
-    metrics = utils.get_metrics(trainloader2, testloader, 'pd', final_model, pimgr)
-    wandb.log(metrics)
+    res_metrics = utils.get_metrics(trainloader2, testloader, 'pd', final_model, pimgr)
+    wandb.log(res_metrics)
     
     class_model_real = train_class_model(args.class_config, True, None, trainloader2, testloader)
     class_model_pred = train_class_model(args.class_config, False, final_model, trainloader2, testloader)
@@ -110,7 +111,7 @@ def run_exp_full(args):
     acc_real = metrics.calculate_accuracy_on_pd(None, class_model_real, testloader, True)
     acc_pred = metrics.calculate_accuracy_on_pd(final_model, class_model_pred, testloader, False)
     
-    wandb.log({'acc_real_pd': acc_real, 'acc_pred_pd': acc_pred})
+    wandb.log({'res_acc_real_pd_class': acc_real, 'res_acc_pred_pd_class': acc_pred})
     
     wandb.finish()
     

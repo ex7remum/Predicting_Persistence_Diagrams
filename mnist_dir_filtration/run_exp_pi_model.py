@@ -23,16 +23,16 @@ def run_exp_full(args):
     train_dataset = getattr(datasets, config['data']['train']['dataset']['type'])(**config['data']['train']['dataset']['args'])
     
     generator = torch.Generator().manual_seed(42)
-    train1_dataset, train2_dataset = torch.utils.random_split(train_dataset, [0.5, 0.5], generator=generator)
+    train1_dataset, train2_dataset = torch.utils.data.dataset.random_split(train_dataset, [0.5, 0.5], generator=generator)
     
     test_dataset = getattr(datasets, config['data']['test']['dataset']['type'])(**config['data']['test']['dataset']['args'])
     
     collator = getattr(collate_fn, config['collator']['type'])
 
-    trainloader1 = DataLoader(train_dataset1, batch_size=config['data']['train']['batch_size'], 
+    trainloader1 = DataLoader(train1_dataset, batch_size=config['data']['train']['batch_size'], 
                              num_workers=config['data']['train']['num_workers'], shuffle=True, drop_last=True, collate_fn=collator)
     
-    trainloader2 = DataLoader(train_dataset2, batch_size=config['data']['train']['batch_size'], 
+    trainloader2 = DataLoader(train2_dataset, batch_size=config['data']['train']['batch_size'], 
                              num_workers=config['data']['train']['num_workers'], shuffle=True, drop_last=True, collate_fn=collator)    
     
     testloader = DataLoader(test_dataset, batch_size=config['data']['test']['batch_size'], 

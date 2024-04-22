@@ -69,11 +69,11 @@ def train_loop_class(model, trainloader, valloader, optimizer, real_pd, device, 
             lr = optimizer.param_groups[0]['lr']
             
             if real_pd:
-                name = 'acc_train_real'
+                name = 'train_acc_real'
             else:
-                name = 'acc_train_pred'
+                name = 'train_acc_pred'
             
             wandb.log({'loss_class': loss, 'grad_norm_class': total_norm, 'learning_rate_class': lr, name: correct / len(Z)})
         
-        val_step(model, valloader, pimgr, device, model_pd)
+        val_step(model, valloader, real_pd, device, model_pd)
     return model

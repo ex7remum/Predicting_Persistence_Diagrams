@@ -22,12 +22,12 @@ def get_metrics(dataloader_train, dataloader_test, model_type, model=None, pimgr
     else:
         acc_logreg, acc_rfc = metrics.logreg_and_rfc_acc(dataloader_train, dataloader_test, model, None)
         
-    acc_logreg_real, acc_rfc_real = metrics.logreg_and_rfc_acc(dataloader_train, dataloader_test, None, None)
+    acc_logreg_real, acc_rfc_real = metrics.logreg_and_rfc_acc(dataloader_train, dataloader_test, None, pimgr)
     
     res_metrics.update({"logreg_acc_real_pi" : acc_logreg_real})
     res_metrics.update({"rfc_acc_real_pi" : acc_rfc_real})
         
-    res_metrics.update({"logreg_acc_" + model_type : acc_logreg})
-    res_metrics.update({"rfc_acc_" + model_type : acc_rfc})
+    res_metrics.update({"logreg_acc_pred_" + model_type : acc_logreg})
+    res_metrics.update({"rfc_acc_pred_" + model_type : acc_rfc})
     return res_metrics
     

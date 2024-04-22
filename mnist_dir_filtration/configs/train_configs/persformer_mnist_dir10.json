@@ -29,5 +29,5 @@
         "wandb_project": "mnist_pds",
         "run_name": "mnist_10_filt_persformer",
         "grad_norm_clip": 10
-    },
+    }
 }

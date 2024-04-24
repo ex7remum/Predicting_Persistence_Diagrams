@@ -23,10 +23,10 @@ def val_step(model, valloader, device):
 
             if log_first:
                 fig, axs = plt.subplots(2, 2, figsize=(20,20))
-
+                Z = Z.cpu().numpy()
+                Z_hat = Z_hat.cpu().numpy()
                 line = np.linspace(0, 1, 100)
                 for i in range(4):
-                    Z_hat = Z_hat.cpu().numpy()
                     axs[i // 2, i % 2].scatter(Z[i, :, 0], Z[i, :, 1], c='b', label='real')
                     axs[i // 2, i % 2].scatter(Z_hat[i, :, 0], Z_hat[i, :, 1], c='r', label='pred')
                     axs[i // 2, i % 2].legend()

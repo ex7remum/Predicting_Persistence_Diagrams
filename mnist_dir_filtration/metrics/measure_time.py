@@ -1,33 +1,21 @@
+# https://pytorch.org/tutorials/recipes/recipes/benchmark.html#benchmarking-with-blocked-autorange
 import torch.nn as nn
-from time import perf_counter
 import torch
+from torch.utils.benchmark import Timer
 
 @torch.no_grad()
 def calc_inference_time(model : nn.Module, dataloader):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.eval()
     
-    ## warmup
-    num_warmup_steps = 0
-    while True:
-        for item in dataloader:
-            src_data = item['items']
-            _ = model(src_data.to(device))
-            num_warmup_steps += 1
-            
-            if num_warmup_steps >= 1000:
-                break
-                
-        if num_warmup_steps >= 1000:
-            break
-                
-    # measure time            
-    start = perf_counter()
     for item in dataloader:
         src_data = item['items']
-        _ = model(src_data.to(device))
-        torch.cuda.synchronize()
+        break
         
-    total_time = perf_counter() - start
-    total_time /= len(dataloader.dataset)
-    return total_time
+    src_data = src_data.to(device)    
+    
+    t0 = Timer(stmt="model(src_data)", globals={"src_data": src_data, "model": model})
+    t0.timeit(100)
+    m0 = t0.blocked_autorange()
+
+    return m0.mean * 1e6

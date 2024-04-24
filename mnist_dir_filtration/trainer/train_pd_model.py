@@ -19,7 +19,6 @@ def val_step(model, valloader, device):
         
             metric_chamfer += losses.ChamferLoss(reduce='sum')(Z_hat, Z)
             metric_hausdorff += losses.HausdorffLoss(reduce='sum')(Z_hat, Z)
-            wandb.log({'val_chamfer': metric_chamfer / val_len, 'val_hausdorff': metric_hausdorff / val_len})
 
             if log_first:
                 fig, axs = plt.subplots(2, 2, figsize=(20,20))
@@ -35,6 +34,7 @@ def val_step(model, valloader, device):
 
                 wandb.log({"PD progress": plt})
                 log_first = False
+    wandb.log({'val_chamfer': metric_chamfer / val_len, 'val_hausdorff': metric_hausdorff / val_len})
 
 
 def train_loop_pd(model, trainloader, valloader, optimizer, loss_fn, device, scheduler=None, n_epochs=25, clip_norm=None, seed=0):

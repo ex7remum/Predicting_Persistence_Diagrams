@@ -13,7 +13,6 @@ class EmbedLayer(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(n_channels, embed_dim, kernel_size=patch_size, stride=patch_size)  # Pixel Encoding
         self.pos_embedding = nn.Parameter(torch.zeros(1, (image_size // patch_size) ** 2, embed_dim), requires_grad=True)  # Positional Embedding
-        self.output = nn.Softplus()
 
     def forward(self, x):
         if len(x.shape) == 3:
@@ -33,6 +32,7 @@ class ImageSet2Set(nn.Module):
         self.embed = EmbedLayer(n_channels, d_hidden, image_size, patch_size)
         self.linear_output = Linear(d_hidden, d_out)
         self.Q = Parameter(torch.rand(n_out_max, d_hidden))
+        self.output = nn.Softplus()
         self.transformer = Transformer(d_hidden, n_heads, n_encoder_layers, n_decoder_layers, dim_feedforward=d_mlp, dropout=0.0, batch_first=True)
         
     def forward(self, X):

@@ -5,13 +5,16 @@
             "n_out_max": 32,
             "d_in": 2,
             "d_out": 2,
-            "d_hidden": 64,
-            "d_mlp": 256
+            "d_hidden": 128,
+            "d_mlp": 256,
+            "n_heads": 8, 
+            "n_encoder_layers": 4,
+            "n_decoder_layers": 4
         }
     },
     "data": {
       "train": {
-          "batch_size": 64,
+          "batch_size": 128,
           "num_workers": 2,
           "dataset": {
               "type": "PDMnist",
@@ -24,7 +27,7 @@
           }
       },
       "test": {
-          "batch_size": 64,
+          "batch_size": 128,
           "num_workers": 2,
           "dataset": {
               "type": "PDMnist",
@@ -40,15 +43,14 @@
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 3e-4,
-            "weight_decay": 1e-4
+            "lr": 5e-5
         }
     },
     "lr_scheduler": {
         "type": "LinearLR",
         "args": {
-            "start_factor": 0.2,
-            "total_iters": 250
+            "start_factor": 0.01,
+            "total_iters": 1000
         }
     },
     "loss": {
@@ -60,7 +62,7 @@
         }
     },
     "trainer": {
-        "n_epochs": 40,
+        "n_epochs": 150,
         "wandb_project": "mnist_pds",
         "run_name": "mnist_10_filt_fixed_full",
         "grad_norm_clip": 10

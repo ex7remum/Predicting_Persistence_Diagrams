@@ -31,7 +31,7 @@ def weighted_sliced_wasserstein_distance_batched(X, Y, a=None, b=None, P=None, n
     
     w1d = wasserstein_1d(X_P.swapaxes(0,1), Y_P.swapaxes(0,1), a.swapaxes(0,1), b.swapaxes(0,1), p)
     
-    return torch.mean(w1d, dim=1) ** (1/p)
+    return (torch.mean(w1d, dim=1) + 1e-8) ** (1/p)
 
 def get_persistence_weights(X, q=None, max_persistence=None):
     

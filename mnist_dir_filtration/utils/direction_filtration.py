@@ -79,4 +79,4 @@ def process_image(img, num_filtrations, filter_type='uniform'):
         pd1 = torch.cat([pd1, add_features1.view(1 ,-1).repeat(pd1.shape[0], 1)], axis=1)
         diagrams.append(torch.cat([pd0, pd1], axis=0))
     diagrams = torch.cat(diagrams)
-    return diagrams, imgs
+    return diagrams

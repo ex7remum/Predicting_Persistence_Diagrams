@@ -5,6 +5,7 @@ from models.TopologyNet import TopologyNet
 from models.MLP import MLP
 from models.transformer import TransformerLayer, MultiHeadAttention, create_padding_mask
 from models.Persformer import CustomPersformer
+from models.pc_encoders import MLPEncoder, TransformerEncoder, DGCNN, PointNet
 
 __all__ = [
     "ImageSet2Set",
@@ -15,5 +16,9 @@ __all__ = [
     "TransformerLayer",
     "create_padding_mask",
     "MultiHeadAttention",
-    "CustomPersformer"
+    "CustomPersformer",
+    "MLPEncoder",
+    "TransformerEncoder",
+    "DGCNN",
+    "PointNet"
 ]

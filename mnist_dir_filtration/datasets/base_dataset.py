@@ -1,8 +1,7 @@
 import torch
-import torchvision
 from torch.utils.data import Dataset
-from torchvision import transforms
 import pickle as pkl
+
 
 class BasePDDataset(Dataset):
     def __init__(self, data_dir, pd_dir, limit=None, leave=None):

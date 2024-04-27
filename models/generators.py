@@ -1,8 +1,9 @@
-from .layers import MLP
+from models import MLP
 import torch
 import torch.nn as nn
 from torch import Tensor
 import math
+
 
 class TopNGenerator(nn.Module):
     def __init__(self, set_channels: int, cosine_channels: int, max_n: int, latent_dim: int):
@@ -46,15 +47,17 @@ class TopNGenerator(nn.Module):
         modulated = alpha * selected_points + beta
         return modulated
 
+
 class MLPGenerator(nn.Module):
-    def __init__(self, set_channels : int, max_n : int, mlp_gen_hidden : int, n_layers : int, latent_dim : int):
+    def __init__(self, set_channels: int, max_n: int, mlp_gen_hidden: int, n_layers: int, latent_dim: int):
         super().__init__()
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.mlp_gen_hidden = mlp_gen_hidden
         self.latent_channels = latent_dim
         self.set_channels = set_channels
         self.max_n = max_n
-        self.mlp = MLP(self.latent_channels, self.max_n * self.set_channels, self.mlp_gen_hidden, nb_layers=n_layers).to(self.device)
+        self.mlp = MLP(self.latent_channels, self.max_n * self.set_channels, self.mlp_gen_hidden,
+                       nb_layers=n_layers).to(self.device)
 
     def forward(self, latent: Tensor, n: int):
         batch_size = latent.shape[0]
@@ -64,7 +67,7 @@ class MLPGenerator(nn.Module):
 
 
 class RandomSetGenerator(nn.Module):
-    def __init__(self, set_channels : int):
+    def __init__(self, set_channels: int):
         super().__init__()
         self.set_channels = set_channels
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -77,7 +80,7 @@ class RandomSetGenerator(nn.Module):
 
 
 class FirstKSetGenerator(nn.Module):
-    def __init__(self, set_channels : int, max_n : int):
+    def __init__(self, set_channels: int, max_n: int):
         super().__init__()
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.points = nn.Parameter(torch.randn(max_n, set_channels).float()).to(self.device)

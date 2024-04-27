@@ -84,7 +84,7 @@ def run_exp_full(args):
                                       im_range=im_range)
        
     run = config["trainer"]["run_name"]
-    wandb.login(key=args.wandb_key)
+    wandb.login(key=args.wandb_key, relogin=True)
     wandb.init(project=config["trainer"]["wandb_project"], 
                name=f"experiment_{run}",
                config=config

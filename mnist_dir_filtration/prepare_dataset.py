@@ -57,7 +57,7 @@ def get_pds_from_data(dataset_type, data_path, filtration_path_name, limit=None,
 
     pds_train = []
     for i, (obj, label) in tqdm(enumerate(dataset_train)):
-        diags = filtration_func(obj, **kwargs['filtration_func']['filtration_args'])
+        diags = filtration_func(obj, **kwargs['filtration_func']['args'])
         pds_train.append(diags)
 
         if limit is not None and len(pds_train) >= limit:
@@ -70,8 +70,8 @@ def get_pds_from_data(dataset_type, data_path, filtration_path_name, limit=None,
 
     if dataset_test is not None:
         pds_test = []
-        for i, (img, label) in tqdm(enumerate(dataset_test)):
-            diags = filtration_func(img, **kwargs)
+        for i, (obj, label) in tqdm(enumerate(dataset_test)):
+            diags = filtration_func(obj, **kwargs['filtration_func']['args'])
             pds_test.append(diags)
 
             if limit is not None and len(pds_test) >= limit:

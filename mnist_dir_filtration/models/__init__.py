@@ -6,6 +6,8 @@ from models.MLP import MLP
 from models.transformer import TransformerLayer, MultiHeadAttention, create_padding_mask
 from models.Persformer import CustomPersformer
 from models.pc_encoders import MLPEncoder, TransformerEncoder, DGCNN, PointNet
+from models.img_encoders import SimpleCNNEncoder, Resnet18Encoder
+from models.OneShotPd import OneShotPd
 
 __all__ = [
     "ImageSet2Set",
@@ -20,5 +22,8 @@ __all__ = [
     "MLPEncoder",
     "TransformerEncoder",
     "DGCNN",
-    "PointNet"
+    "PointNet",
+    "SimpleCNNEncoder",
+    "Resnet18Encoder",
+    "OneShotPd"
 ]

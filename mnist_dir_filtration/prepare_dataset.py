@@ -11,8 +11,8 @@ from itertools import product
 from sklearn.model_selection import train_test_split
 
 
-def get_pds_from_data(dataset_type, data_path, filtration_func, filtration_path_name, limit=None, **kwargs):
-    # kwargs - additional params to filtration function
+def get_pds_from_data(dataset_type, data_path, filtration_path_name, limit=None, **kwargs):
+    filtration_func = getattr(utils, kwargs['filtration_func']['type'])
 
     os.makedirs(filtration_path_name, exist_ok=True)
     os.makedirs(data_path, exist_ok=True)
@@ -94,6 +94,5 @@ if __name__ == "__main__":
 
     f = open(args.config)
     config = json.load(f)
-    filt_fn = getattr(utils, config['setup']['filtration_func']['type'])
     get_pds_from_data(config['dataset_type'], config['data_path'],
-                      filt_fn, config['filtration_path_name'], config['limit'], **config['setup'])
+                      config['filtration_path_name'], config['limit'], **config['setup'])

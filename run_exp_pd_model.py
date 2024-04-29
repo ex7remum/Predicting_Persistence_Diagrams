@@ -8,7 +8,6 @@ import utils
 import models
 import losses
 import collate_fn
-import metrics
 import os
 from gudhi.representations.vector_methods import PersistenceImage as PersistenceImageGudhi
 import trainer
@@ -102,17 +101,6 @@ def run_exp_full(args):
     res_metrics = utils.get_metrics(trainloader2, testloader, 'pd', final_model, pimgr)
     wandb.log(res_metrics)
     
-    class_model_real = train_class_model(args.class_config, True, None, trainloader2, testloader)
-    class_model_pred = train_class_model(args.class_config, False, final_model, trainloader2, testloader)
-    
-    torch.save(class_model_real.state_dict(), f'pretrained_models/{run}_class_real_model.pth')
-    torch.save(class_model_pred.state_dict(), f'pretrained_models/{run}_class_pred_model.pth')
-    
-    acc_real = metrics.calculate_accuracy_on_pd(None, class_model_real, testloader, True)
-    acc_pred = metrics.calculate_accuracy_on_pd(final_model, class_model_pred, testloader, False)
-    
-    wandb.log({'res_acc_real_pd_class': acc_real, 'res_acc_pred_pd_class': acc_pred})
-    
     wandb.finish()
     
 
@@ -131,14 +119,6 @@ if __name__ == "__main__":
         default=None,
         type=str,
         help="path to trainer config",
-    )
-    
-    parser.add_argument(
-        "-l",
-        "--class_config",
-        default=None,
-        type=str,
-        help="path to classification model config",
     )
     
     args = parser.parse_args()

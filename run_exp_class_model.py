@@ -82,7 +82,7 @@ def run_exp_full(args):
                )
 
     os.makedirs('pretrained_models', exist_ok=True)
-    if args.exp_type == 'real':
+    if args.type == 'real':
         class_model_real = train_class_model(args.class_config, True, None, trainloader2, testloader)
         torch.save(class_model_real.state_dict(), f'pretrained_models/{run}_class_real_model.pth')
         acc_real = metrics.calculate_accuracy_on_pd(None, class_model_real, testloader, True)

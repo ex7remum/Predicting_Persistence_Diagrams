@@ -11,9 +11,12 @@ class Set2Set(nn.Module):
         self.Q = Parameter(torch.rand(n_out_max, d_hidden))
         self.transformer = Transformer(d_hidden, n_heads, n_encoder_layers, n_decoder_layers, 
                                        dim_feedforward=d_mlp, dropout=0.0, batch_first=True)
+        self.output = nn.Softplus()
+        
         
     def forward(self, X):
         batch_size = X.shape[0]
         X = self.linear_input(X)
         Z = self.transformer(X, self.Q.unsqueeze(0).repeat(batch_size, 1, 1))
-        return self.linear_output(Z)
+        out = self.linear_output(Z)
+        return self.output(out)

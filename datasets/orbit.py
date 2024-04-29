@@ -5,7 +5,8 @@ import torch
 class OrbitDataset(BasePDDataset):
     def __getitem__(self, idx):
         item, label = self.dataset[idx]
-        pd = self.pds[idx]
+        item = torch.from_numpy(item).to(torch.float32)
+        pd = torch.from_numpy(self.pds[idx])
         pd = pd[pd[:, 2] == 1]
 
         if self.leave is not None:

@@ -1,18 +1,15 @@
 import torch
 import torch.nn as nn
-from torch.nn import Linear
-from torch.nn.functional import relu
-import torch.nn.functional as F
-from torch import Tensor
 import math
 import models
-import numpy as np
+import json
 
 
 # Persformer from https://arxiv.org/abs/2112.15210
 class CustomPersformer(nn.Module):
     def __init__(self, n_in, embed_dim, fc_dim, num_heads, num_layers, n_out_enc,
-                 dropout = 0.1, reduction="mean", use_skip=True):
+                 dropout=0.1, reduction="mean", use_skip=True, on_real=True, model_pd_config=None,
+                 model_pd_path=None):
         super(CustomPersformer, self).__init__()
         self.embed_dim = embed_dim
         self.reduction = reduction
@@ -20,6 +17,13 @@ class CustomPersformer(nn.Module):
             nn.Linear(n_in, embed_dim),
             nn.GELU(),
         )
+        self.is_real = on_real
+        if not self.is_real:
+            f = open(model_pd_config)
+            config = json.load(f)
+            self.pd_model = getattr(models, config['arch']['type'])(**config['arch']['args'])
+            self.pd_model.load_state_dict(torch.load(model_pd_path))
+            self.pd_model.eval()
         # (batch, length, 3) -> (batch, length, emb_dim)
 
         self.query = nn.parameter.Parameter(
@@ -46,7 +50,13 @@ class CustomPersformer(nn.Module):
             nn.Linear(64, n_out_enc),
         )
 
-    def forward(self, X, mask=None):
+    def forward(self, batch):
+        if self.is_real:
+            X = batch['pds']
+        else:
+            X = self.pd_model(batch)['pred_pds']
+
+        mask = batch['mask']
         if mask is None:
             mask = torch.ones_like(X).to(X.device)[..., 0]
         outputs = self.embedding(X) * math.sqrt(self.embed_dim)
@@ -62,7 +72,7 @@ class CustomPersformer(nn.Module):
                 self.query.expand(outputs.shape[0], -1, -1),
                 outputs,
                 outputs,
-                mask = padding_mask[:, 0, :].unsqueeze(1),
+                mask=padding_mask[:, 0, :].unsqueeze(1),
             )
             outputs = outputs.squeeze(dim=1)
         else:
@@ -73,4 +83,6 @@ class CustomPersformer(nn.Module):
         z = self.output(outputs)
         # z : (batch_size, n_out_enc)
 
-        return z
+        return {
+            "logits": z
+        }

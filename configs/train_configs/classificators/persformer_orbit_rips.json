@@ -9,8 +9,37 @@
             "num_layers": 5,
             "n_out_enc": 5,
             "reduction": "attention",
-            "dropout": 0.0
+            "dropout": 0.0,
+            "on_real": true,
+            "model_pd_config": null,
+            "model_pd_path": null
         }
+    },
+    "data": {
+      "train": {
+          "batch_size": 32,
+          "num_workers": 2,
+          "dataset": {
+              "type": "OrbitDataset",
+              "args": {
+                  "data_dir": "RAW/Orbit10k/orbit10000k_train.pkl",
+                  "pd_dir": "PD/rips/10000/500/Orbit_pds.pkl",
+                  "leave": 32
+              }
+          }
+      },
+      "test": {
+          "batch_size": 32,
+          "num_workers": 2,
+          "dataset": {
+              "type": "OrbitDataset",
+              "args": {
+                  "data_dir": "RAW/Orbit10k/orbit10000k_test.pkl",
+                  "pd_dir": "PD/rips/10000/500/Orbit_pds_test.pkl",
+                  "leave": 32
+              }
+          }
+      }
     },
     "optimizer": {
         "type": "AdamW",
@@ -26,10 +55,15 @@
             "total_iters": 250
         }
     },
+    "loss": {
+        "type": "CustomCELoss",
+        "args": {}
+    },
     "trainer": {
         "n_epochs": 200,
         "wandb_project": "orbit_pds",
         "run_name": "orbit_rips_10k_500_persformer",
-        "grad_norm_clip": 10
+        "grad_norm_clip": 10,
+        "device": "cuda"
     }
 }

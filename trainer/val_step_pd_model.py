@@ -14,12 +14,13 @@ def val_step_pd_model(model, valloader, device):
     log_first = True
     for batch in valloader:
         batch = trainer.move_batch_to_device(batch, device)
-        X, Z = batch['items'], batch['pds']
+        Z = batch['pds']
         with torch.no_grad():
-            Z_hat = model(batch)['pred_pds']
+            model_out = model(batch)
+            Z_hat = model_out['pred_pds']
         
-            metric_chamfer += losses.ChamferLoss(reduce='sum')(Z_hat, Z)
-            metric_hausdorff += losses.HausdorffLoss(reduce='sum')(Z_hat, Z)
+            metric_chamfer += losses.ChamferLoss(reduce='sum')(batch, model_out)
+            metric_hausdorff += losses.HausdorffLoss(reduce='sum')(batch, model_out)
 
             if log_first:
                 fig, axs = plt.subplots(2, 2, figsize=(20, 20))

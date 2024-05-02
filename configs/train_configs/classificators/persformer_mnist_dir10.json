@@ -7,8 +7,39 @@
             "fc_dim": 256, 
             "num_heads": 8, 
             "num_layers": 4, 
-            "n_out_enc": 10
+            "n_out_enc": 10,
+            "on_real": false,
+            "model_pd_config": "/content/Predicting_Persistence_Diagrams/configs/train_configs/pd_models/img_transformer_config.json",
+            "model_pd_path": "/content/pretrained_models/pd_model_model.pth"
         }
+    },
+    "data": {
+      "train": {
+          "batch_size": 64,
+          "num_workers": 2,
+          "dataset": {
+              "type": "PDMnist",
+              "args": {
+                  "data_dir": "RAW/MNIST",
+                  "pd_dir": "PD/direction/10/MNIST_pds.pkl",
+                  "train": true,
+                  "leave": 32
+              }
+          }
+      },
+      "test": {
+          "batch_size": 64,
+          "num_workers": 2,
+          "dataset": {
+              "type": "PDMnist",
+              "args": {
+                  "data_dir": "RAW/MNIST",
+                  "pd_dir": "PD/direction/10/MNIST_pds_test.pkl",
+                  "train": false,
+                  "leave": 32
+              }
+          }
+      }
     },
     "optimizer": {
         "type": "Adam",
@@ -23,10 +54,15 @@
             "total_iters": 250
         }
     },
+    "loss": {
+        "type": "CustomCELoss",
+        "args": {}
+    },
     "trainer": {
-        "n_epochs": 100,
-        "wandb_project": "mnist_pds",
-        "run_name": "mnist_10_filt_persformer",
-        "grad_norm_clip": 10
+        "n_epochs": 5,
+        "wandb_project": "mnist_pds_testing",
+        "run_name": "persformer_mnist",
+        "grad_norm_clip": 10,
+        "device": "cuda"
     }
 }

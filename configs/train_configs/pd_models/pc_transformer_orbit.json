@@ -60,7 +60,8 @@
         "n_epochs": 500,
         "wandb_project": "orbit_pds",
         "run_name": "set2set_fixed_10k_500",
-        "grad_norm_clip": 10
+        "grad_norm_clip": 10,
+        "device": "cuda"
     },
     "collator": {
        "type": "collate_fn"

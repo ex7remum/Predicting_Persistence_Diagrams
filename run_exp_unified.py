@@ -51,7 +51,7 @@ def run_exp_full(args):
     testloader = DataLoader(test_dataset, batch_size=config['data']['test']['batch_size'],
                             num_workers=config['data']['test']['num_workers'], shuffle=False, collate_fn=collator)
 
-    model, optimizer, scheduler = trainer.get_train_model_params(args.config)
+    model, optimizer, scheduler = trainer.get_train_model_params(config)
     model = model.to(device)
 
     run = trainer.init_wandb(config=config, wandb_key=args.wandb_key)
@@ -64,6 +64,7 @@ def run_exp_full(args):
                                      loss_fn=loss_fn,
                                      device=device,
                                      val_function=val_functions[args.type],
+                                     exp_type=args.type,
                                      scheduler=scheduler,
                                      n_epochs=config["trainer"]["n_epochs"],
                                      clip_norm=config["trainer"]["grad_norm_clip"],
@@ -76,7 +77,7 @@ def run_exp_full(args):
         torch.save(final_model.state_dict(), f'pretrained_models/{run}_model.pth')
 
     if args.type == 'pi' or args.type == 'pd':
-        res_metrics = utils.get_metrics(trainloader2, testloader, args.type, final_model, pimgr)
+        res_metrics = utils.get_metrics(trainloader2, testloader, args.type, device, final_model, pimgr)
         wandb.log(res_metrics)
     wandb.finish()
 

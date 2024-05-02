@@ -3,7 +3,6 @@
         "type": "ImageSet2Set",
         "args": {
             "n_out_max": 32,
-            "d_in": 2,
             "d_out": 2,
             "d_hidden": 128,
             "d_mlp": 256,

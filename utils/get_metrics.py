@@ -1,7 +1,7 @@
 import metrics
 
 
-def get_metrics(dataloader_train, dataloader_test, model_type, model=None, pimgr=None):
+def get_metrics(dataloader_train, dataloader_test, model_type, device, model=None, pimgr=None):
     res_metrics = {}
     
     if model is not None:
@@ -19,11 +19,11 @@ def get_metrics(dataloader_train, dataloader_test, model_type, model=None, pimgr
             res_metrics.update({f'PIE_{model_type}': pie})
         
     if model_type == 'pd':
-        acc_logreg, acc_rfc = metrics.logreg_and_rfc_acc(dataloader_train, dataloader_test, model, pimgr)
+        acc_logreg, acc_rfc = metrics.logreg_and_rfc_acc(dataloader_train, dataloader_test, device, model, pimgr)
     else:
-        acc_logreg, acc_rfc = metrics.logreg_and_rfc_acc(dataloader_train, dataloader_test, model, None)
+        acc_logreg, acc_rfc = metrics.logreg_and_rfc_acc(dataloader_train, dataloader_test, device, model, None)
         
-    acc_logreg_real, acc_rfc_real = metrics.logreg_and_rfc_acc(dataloader_train, dataloader_test, None, pimgr)
+    acc_logreg_real, acc_rfc_real = metrics.logreg_and_rfc_acc(dataloader_train, dataloader_test, device, None, pimgr)
     
     res_metrics.update({'logreg_acc_real_pi': acc_logreg_real})
     res_metrics.update({'rfc_acc_real_pi': acc_rfc_real})

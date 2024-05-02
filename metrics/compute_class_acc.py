@@ -8,16 +8,15 @@ from trainer import move_batch_to_device
 
 
 @torch.no_grad()
-def get_items_from_dataloader(dataloader, model=None, pimgr=None):
+def get_items_from_dataloader(dataloader, device, model=None, pimgr=None):
     data, labels = [], []
-    device = next(model.parameters()).device
     
     for batch in dataloader:
         batch = move_batch_to_device(batch, device)
-        v = batch['labels']
+        v = batch['labels'].cpu()
         if model is None:
             # compute PIs on real PDs
-            PI = batch['pis']
+            PI = batch['pis'].cpu()
         else:
             out = model(batch)
             
@@ -38,9 +37,9 @@ def get_items_from_dataloader(dataloader, model=None, pimgr=None):
 
 
 @torch.no_grad()
-def logreg_and_rfc_acc(dataloader_train, dataloader_test, model=None, pimgr=None):
-    X_train, y_train = get_items_from_dataloader(dataloader_train, model, pimgr)
-    X_test, y_test = get_items_from_dataloader(dataloader_test, model, pimgr)
+def logreg_and_rfc_acc(dataloader_train, dataloader_test, device, model=None, pimgr=None):
+    X_train, y_train = get_items_from_dataloader(dataloader_train, device, model, pimgr)
+    X_test, y_test = get_items_from_dataloader(dataloader_test, device, model, pimgr)
 
     X_train, y_train = np.array(X_train), np.array(y_train)
     X_test, y_test = np.array(X_test), np.array(y_test)

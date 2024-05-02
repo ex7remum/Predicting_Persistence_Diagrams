@@ -4,28 +4,29 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
+from trainer import move_batch_to_device
 
 
 @torch.no_grad()
 def get_items_from_dataloader(dataloader, model=None, pimgr=None):
     data, labels = [], []
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = next(model.parameters()).device
     
-    for item in dataloader:
-        X, Z, v = item['items'], item['pds'], item['labels']
-        Z = Z[..., :2].to(torch.float32)
+    for batch in dataloader:
+        batch = move_batch_to_device(batch, device)
+        v = batch['labels']
         if model is None:
             # compute PIs on real PDs
-            PI = torch.from_numpy(pimgr.fit_transform(Z)).to(torch.float32)
-            PI = PI / PI.max(dim=1, keepdim=True)[0]
+            PI = batch['pis']
         else:
-            out = model(X.to(device)).cpu()
+            out = model(batch)
             
             if pimgr is None:
                 # PI model
-                PI = out
+                PI = out['pred_pis'].cpu()
             else:
                 # PD model
+                out = out['pred_pds'].cpu()
                 PI = torch.from_numpy(pimgr.fit_transform(out)).to(torch.float32)
         
         for img in PI:
@@ -34,6 +35,7 @@ def get_items_from_dataloader(dataloader, model=None, pimgr=None):
             labels.append(label.item())
             
     return data, labels
+
 
 @torch.no_grad()
 def logreg_and_rfc_acc(dataloader_train, dataloader_test, model=None, pimgr=None):
@@ -68,24 +70,26 @@ def logreg_and_rfc_acc(dataloader_train, dataloader_test, model=None, pimgr=None
 
 # calculate accuracy of classificaiton of some model trained on pds
 @torch.no_grad()
-def calculate_accuracy_on_pd(model_pd : nn.Module, model_class : nn.Module, dataloader, on_real = True):
+def calculate_accuracy_on_pd(model_pd: nn.Module, model_class: nn.Module, dataloader, on_real=True):
     model_class.eval()
     if model_pd is not None:
         model_pd.eval()
     correct = 0.
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    for item in dataloader:
-        X, Z, v = item['items'], item['pds'], item['labels']
-        Z = Z[..., :2].to(torch.float32)
-        
-        if on_real:
-            logits = model_class(Z.to(device))
-        else:
-            PD_pred = model_pd(X.to(device))
-            logits = model_class(PD_pred)
-            
-        correct += (v.to(device) == torch.argmax(logits, axis=1)).sum()
-    correct /= len(dataloader.dataset)
-    return correct.item()
-    
+    device = next(model_class.parameters()).device
+
+    val_len = len(dataloader.dataset)
+
+    for batch in dataloader:
+        batch = move_batch_to_device(batch, device)
+        labels = batch['labels']
+        with torch.no_grad():
+            if on_real:
+                logits = model_class(batch)['logits']
+            else:
+                PD_pred = model_pd(batch)['pred_pds']
+                dumb_batch = {'pds': PD_pred}
+                logits = model_class(dumb_batch)['logits']
+            correct += (labels == torch.argmax(logits, axis=1)).sum()
+
+    val_pd_acc = correct / val_len
+    return val_pd_acc.item()

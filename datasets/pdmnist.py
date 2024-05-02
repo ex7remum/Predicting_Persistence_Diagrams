@@ -1,6 +1,4 @@
-import torch
 import torchvision
-from torch.utils.data import Dataset
 from torchvision import transforms
 import pickle as pkl
 from datasets.base_dataset import BasePDDataset

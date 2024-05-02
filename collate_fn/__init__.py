@@ -1,5 +1,5 @@
-from collate_fn.collate import collate_fn
+from collate_fn.collate import Collator
 
 __all__ = [
-  "collate_fn",   
+  "Collator",
 ]

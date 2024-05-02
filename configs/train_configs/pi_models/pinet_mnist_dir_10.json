@@ -51,10 +51,12 @@
         "n_epochs": 40,
         "wandb_project": "mnist_pds",
         "run_name": "mnist_10_filt_pinet",
-        "grad_norm_clip": 10
+        "grad_norm_clip": 10,
+        "device": "cuda"
     },
-    "collator": {
-       "type": "collate_fn"
+    "loss": {
+        "type": "PIBCELoss",
+        "args": {}
     },
     "pimgr": {
         "bandwidth": 0.05,

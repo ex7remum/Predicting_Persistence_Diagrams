@@ -1,9 +1,18 @@
-from losses.losses import SlicedWassersteinLoss, WeightedSlicedWassersteinLoss, PersistenceWeightedSlicedWassersteinLoss, ChamferLoss, HausdorffLoss
+from losses.pd_losses import SlicedWassersteinLoss, WeightedSlicedWassersteinLoss, \
+    PersistenceWeightedSlicedWassersteinLoss, ChamferLoss, HausdorffLoss
+from losses.PIMSELoss import PIMSELoss
+from losses.PIBCELoss import PIBCELoss
+from losses.CustomCELoss import CustomCELoss
+from losses.CustomMSELoss import CustomMSELoss
 
 __all__ = [
    "SlicedWassersteinLoss",
     "WeightedSlicedWassersteinLoss",
     "PersistenceWeightedSlicedWassersteinLoss",
     "ChamferLoss",
-    "HausdorffLoss"
+    "HausdorffLoss",
+    "PIMSELoss",
+    "PIBCELoss",
+    "CustomCELoss",
+    "CustomMSELoss"
 ]

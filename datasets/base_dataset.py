@@ -21,6 +21,7 @@ class BasePDDataset(Dataset):
     def __getitem__(self, idx):
         item, label = self.dataset[idx]
         pd = self.pds[idx]
+        pd = pd[:, :2]
         
         if self.leave is not None:
             if len(pd) >= self.leave:

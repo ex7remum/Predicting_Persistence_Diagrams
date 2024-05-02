@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
-from torch.nn import Module
 from ot.sliced import sliced_wasserstein_distance, get_random_projections
 from ot.lp import wasserstein_1d
 
 sliced_wasserstein_distance_batched = torch.vmap(sliced_wasserstein_distance, randomness="same")
+
 
 def weighted_sliced_wasserstein_distance_batched(X, Y, a=None, b=None, P=None, n_projections=64, p=2, device=None, random_seed=None):
     
@@ -18,30 +18,30 @@ def weighted_sliced_wasserstein_distance_batched(X, Y, a=None, b=None, P=None, n
     
     (n_batch, n, d), m = X.shape, Y.shape[1]
     
-    if a==None:
+    if a is None:
         a = torch.ones((n_batch, n), device=device) / n
-    if b==None:
+    if b is None:
         b = torch.ones((n_batch, m), device=device) / m
     
-    if P==None:
+    if P is None:
         P = torch.tensor(get_random_projections(d, n_projections, random_seed), device=device, dtype=torch.float)
     
     X_P = X @ P
     Y_P = Y @ P
     
-    w1d = wasserstein_1d(X_P.swapaxes(0,1), Y_P.swapaxes(0,1), a.swapaxes(0,1), b.swapaxes(0,1), p)
-    
+    w1d = wasserstein_1d(X_P.swapaxes(0, 1), Y_P.swapaxes(0, 1), a.swapaxes(0, 1), b.swapaxes(0, 1), p)
     return (torch.mean(w1d, dim=1) + 1e-6) ** (1/p)
+
 
 def get_persistence_weights(X, q=None, max_persistence=None):
     
-    if q==None:
+    if q is None:
         n_batch, n = X.shape[0], X.shape[1]
         weights = torch.ones((n_batch, n)) / n
     
     elif q in [1, 2]:
-        persistence = (X[:,:,1] - X[:,:,0]) ** q
-        if max_persistence==None:
+        persistence = (X[..., 1] - X[..., 0]) ** q
+        if max_persistence is None:
             max_persistence, _ = torch.max(persistence, axis=1, keepdims=True)
         persistence_normed_max = persistence / max_persistence
         weights = persistence_normed_max / torch.sum(persistence_normed_max, axis=1, keepdims=True)
@@ -58,13 +58,12 @@ class LossFunction(nn.Module):
         super().__init__()
         
         identity = lambda x: x
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        if reduce==None:
+        if reduce is None:
             self.reduce_fn = identity
-        elif reduce=="mean":
+        elif reduce == "mean":
             self.reduce_fn = torch.mean
-        elif reduce=="sum":
+        elif reduce == "sum":
             self.reduce_fn = torch.sum
         else:
             raise ValueError("Reduce should be None, 'mean' or 'sum'.")
@@ -81,8 +80,11 @@ class SlicedWassersteinLoss(LossFunction):
         self.p = p
         self.random_seed = random_seed
         
-    def forward(self, X, Y):
-        return self.reduce(sliced_wasserstein_distance_batched(X, Y, n_projections=self.n_projections, p=self.p, seed=self.random_seed))
+    def forward(self, batch, model_out):
+        X = batch['pds']
+        Y = model_out['pred_pds']
+        return self.reduce(sliced_wasserstein_distance_batched(X, Y, n_projections=self.n_projections, p=self.p,
+                                                               seed=self.random_seed))
     
 
 class WeightedSlicedWassersteinLoss(LossFunction):
@@ -94,8 +96,11 @@ class WeightedSlicedWassersteinLoss(LossFunction):
         self.q = q
         self.random_seed = random_seed
         
-    def forward(self, X, Y, a=None, b=None):
-        return self.reduce(weighted_sliced_wasserstein_distance_batched(X, Y, a, b, n_projections=self.n_projections, p=self.p, random_seed=self.random_seed))
+    def forward(self, batch, model_out, a=None, b=None):
+        X = batch['pds']
+        Y = model_out['pred_pds']
+        return self.reduce(weighted_sliced_wasserstein_distance_batched(X, Y, a, b, n_projections=self.n_projections,
+                                                                        p=self.p, random_seed=self.random_seed))
 
     
 class PersistenceWeightedSlicedWassersteinLoss(LossFunction):
@@ -108,10 +113,14 @@ class PersistenceWeightedSlicedWassersteinLoss(LossFunction):
         self.max_persistence = max_persistence
         self.random_seed = random_seed
         
-    def forward(self, X, Y):
-        a = get_persistence_weights(X, self.q, self.max_persistence).to(self.device)
-        b = get_persistence_weights(Y, self.q, self.max_persistence).to(self.device)
-        return self.reduce(weighted_sliced_wasserstein_distance_batched(X, Y, a, b, n_projections=self.n_projections, p=self.p, device=self.device, random_seed=self.random_seed))
+    def forward(self, batch, model_out):
+        X = batch['pds']
+        Y = model_out['pred_pds']
+        a = get_persistence_weights(X, self.q, self.max_persistence).to(X.device)
+        b = get_persistence_weights(Y, self.q, self.max_persistence).to(X.device)
+        return self.reduce(weighted_sliced_wasserstein_distance_batched(X, Y, a, b, n_projections=self.n_projections,
+                                                                        p=self.p, device=X.device,
+                                                                        random_seed=self.random_seed))
 
 
 class ChamferLoss(LossFunction):
@@ -119,7 +128,9 @@ class ChamferLoss(LossFunction):
     def __init__(self, reduce="mean"):
         super().__init__(reduce)
         
-    def forward(self, X, Y):
+    def forward(self, batch, model_out):
+        X = batch['pds']
+        Y = model_out['pred_pds']
         A = torch.cdist(X, Y, p=2)
         X_inf, _ = torch.min(A, dim=2)
         Y_inf, _ = torch.min(A, dim=1)
@@ -132,7 +143,9 @@ class HausdorffLoss(LossFunction):
     def __init__(self, reduce="mean"):
         super().__init__(reduce)
         
-    def forward(self, X, Y):
+    def forward(self, batch, model_out):
+        X = batch['pds']
+        Y = model_out['pred_pds']
         A = torch.cdist(X, Y, p=2)
         X_inf, _ = torch.min(A, dim=2)
         Y_inf, _ = torch.min(A, dim=1)

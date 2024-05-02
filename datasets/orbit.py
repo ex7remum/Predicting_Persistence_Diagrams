@@ -8,6 +8,7 @@ class OrbitDataset(BasePDDataset):
         item = torch.from_numpy(item).to(torch.float32)
         pd = torch.from_numpy(self.pds[idx])
         pd = pd[pd[:, 2] == 1]
+        pd = pd[:, :2]
 
         if self.leave is not None:
             if len(pd) >= self.leave:

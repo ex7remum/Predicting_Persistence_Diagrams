@@ -1,17 +1,18 @@
 from gudhi.wasserstein import wasserstein_distance
 import torch.nn as nn
 import torch
+from trainer import move_batch_to_device
+
 
 @torch.no_grad()
-def calc_gudhi_W2_dist(model : nn.Module, dataloader):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def calc_gudhi_W2_dist(model: nn.Module, dataloader):
+    device = next(model.parameters()).device
     model.eval()
     W2 = 0.
-    for item in dataloader:
-        src_data = item['items']
-        src_pd = item['pds']
-        src_pd = src_pd[..., :2].to(torch.float32)
-        tgt_pd = model(src_data.to(device))
+    for batch in dataloader:
+        batch = move_batch_to_device(batch, device)
+        src_pd = batch['pds'].to(torch.float32)
+        tgt_pd = model(batch)['pred_pds']
         
         for src, tgt in zip(src_pd, tgt_pd):
             W2 += wasserstein_distance(src.cpu(), tgt.cpu(), order=1., internal_p=2.)

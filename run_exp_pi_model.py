@@ -14,45 +14,65 @@ import torchvision
 import trainer
 
 
-def run_exp_full(args):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    f = open(args.config)
+def get_dataloaders(path_to_config):
+    f = open(path_to_config)
     config = json.load(f)
-    
-    train_dataset = getattr(datasets, config['data']['train']['dataset']['type'])(**config['data']['train']['dataset']['args'])
-    
+    train_dataset = getattr(datasets, config['data']['train']['dataset']['type'])(
+        **config['data']['train']['dataset']['args'])
+
     generator = torch.Generator().manual_seed(42)
-    train1_dataset, train2_dataset = torch.utils.data.dataset.random_split(train_dataset, [0.5, 0.5], generator=generator)
-    
-    test_dataset = getattr(datasets, config['data']['test']['dataset']['type'])(**config['data']['test']['dataset']['args'])
-    
+    train1_dataset, train2_dataset = torch.utils.data.dataset.random_split(train_dataset, [0.5, 0.5],
+                                                                           generator=generator)
+
+    test_dataset = getattr(datasets, config['data']['test']['dataset']['type'])(
+        **config['data']['test']['dataset']['args'])
+
     collator = getattr(collate_fn, config['collator']['type'])
 
-    trainloader1 = DataLoader(train1_dataset, batch_size=config['data']['train']['batch_size'], 
-                             num_workers=config['data']['train']['num_workers'], shuffle=True, drop_last=True, collate_fn=collator)
-    
-    trainloader2 = DataLoader(train2_dataset, batch_size=config['data']['train']['batch_size'], 
-                             num_workers=config['data']['train']['num_workers'], shuffle=True, drop_last=True, collate_fn=collator)    
-    
-    testloader = DataLoader(test_dataset, batch_size=config['data']['test']['batch_size'], 
+    trainloader1 = DataLoader(train1_dataset, batch_size=config['data']['train']['batch_size'],
+                              num_workers=config['data']['train']['num_workers'], shuffle=True, drop_last=True,
+                              collate_fn=collator)
+
+    trainloader2 = DataLoader(train2_dataset, batch_size=config['data']['train']['batch_size'],
+                              num_workers=config['data']['train']['num_workers'], shuffle=True, drop_last=True,
+                              collate_fn=collator)
+
+    testloader = DataLoader(test_dataset, batch_size=config['data']['test']['batch_size'],
                             num_workers=config['data']['test']['num_workers'], shuffle=False, collate_fn=collator)
-    
-    model = getattr(models, config['arch']['type'])(**config['arch']['args']).to(device)
-    
+    return train1_dataset, train2_dataset, trainloader1, trainloader2, testloader
+
+
+def get_train_model_params(path_to_config):
+    f = open(path_to_config)
+    config = json.load(f)
+    model = getattr(models, config['arch']['type'])(**config['arch']['args'])
+
     optimizer = getattr(torch.optim, config['optimizer']['type'])(model.parameters(), **config['optimizer']['args'])
-    
+
     if 'lr_scheduler' in config:
-        scheduler = getattr(torch.optim.lr_scheduler, config['lr_scheduler']['type'])(optimizer, **config['lr_scheduler']['args'])
+        scheduler = getattr(torch.optim.lr_scheduler, config['lr_scheduler']['type'])(optimizer,
+                                                                                      **config['lr_scheduler']['args'])
     else:
         scheduler = None
+
+    return model, optimizer, scheduler
+
+
+def run_exp_full(args):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    train1_dataset, train2_dataset, trainloader1, trainloader2, testloader = get_dataloaders(args.config)
+    model, optimizer, scheduler = get_train_model_params(args.config)
+    model = model.to(device)
+    f = open(args.config)
+    config = json.load(f)
 
     if 'pimgr' in config:
         pimgr = PersistenceImageGudhi(resolution=[50, 50],
                                       weight=lambda x: x[1],
                                       **config['pimgr'])
     else:
-        sigma, im_range = utils.compute_pimgr_parameters(train_dataset.pds)
+        sigma, im_range = utils.compute_pimgr_parameters(train1_dataset.pds)
         pimgr = PersistenceImageGudhi(bandwidth=sigma,
                                       resolution=[50, 50],
                                       weight=lambda x: x[1],

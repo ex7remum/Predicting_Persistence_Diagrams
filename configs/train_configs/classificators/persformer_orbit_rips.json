@@ -64,6 +64,7 @@
         "wandb_project": "orbit_pds",
         "run_name": "orbit_rips_10k_500_persformer_real",
         "grad_norm_clip": 10,
-        "device": "cuda"
+        "device": "cuda",
+        "n_runs": 3
     }
 }

@@ -79,8 +79,12 @@ def run_exp_full(args):
         f = open('result_metrics.json')
         all_metrics = json.load(f)
         dataset_name = config['data']['train']['dataset']['type']
-        model_name = config['arch']['type']
-        exp_name = config['trainer']['run_name']
+        if args.type != 'real':
+            model_name = config['arch']['type']
+            exp_name = config['trainer']['run_name']
+        else:
+            model_name = 'real'
+            exp_name = 'real'
 
         if dataset_name not in all_metrics:
             all_metrics[dataset_name] = {}

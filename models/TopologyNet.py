@@ -62,6 +62,7 @@ class TopologyNet(nn.Module):
         self.linear2 = nn.Linear(1024, 2500, bias=False)
 
         self.dp1 = nn.Dropout(p=dropout)
+        self.out = nn.Sigmoid()
 
     def forward(self, batch):
         x = batch['items']
@@ -86,6 +87,7 @@ class TopologyNet(nn.Module):
         x = F.leaky_relu(self.linear1(x), negative_slope=0.2)
         x = self.dp1(x)
         x = self.linear2(x)
+        x = self.out(x)
         return {
             'pred_pis': x
         }

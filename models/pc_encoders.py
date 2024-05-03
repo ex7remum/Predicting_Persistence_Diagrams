@@ -36,7 +36,9 @@ class TransformerEncoder(nn.Module):
             nn.Linear(fc_dim, n_out_enc)
         )
 
-    def forward(self, X, mask=None):
+    def forward(self, batch):
+        X = batch['items']
+        mask = batch['mask']
         outputs = self.embedding(X) * math.sqrt(self.embed_dim)
 
         if mask is None:
@@ -68,7 +70,9 @@ class TransformerEncoder(nn.Module):
         z = self.output(outputs)
         # z : (batch_size, n_out_enc)
 
-        return z
+        return {
+            "latent": z
+        }
 
 
 class MLPEncoder(nn.Module):
@@ -76,13 +80,17 @@ class MLPEncoder(nn.Module):
         super(MLPEncoder, self).__init__()
         self.mlp = MLP(dim_in=n_in, width=n_hidden, dim_out=n_out, nb_layers=num_layers)
 
-    def forward(self, X, mask):
+    def forward(self, batch):
+        X = batch['items']
+        mask = batch['mask']
         # X : (batch_size, max_len_batch, set_channels)
         # mask : (batch_size, max_len_batch) 1, if real, 0, if padding
         X = self.mlp(X)
         lengths = mask.sum(dim=1).detach()
         outputs = (X * mask.unsqueeze(2)).sum(dim=1) / lengths.unsqueeze(1)  # aggregating
-        return outputs  # (batch_size, latent_dim)
+        return {
+            outputs
+        } # (batch_size, latent_dim)
 
 
 def knn(x, k):
@@ -139,7 +147,8 @@ class PointNet(nn.Module):
         self.dp1 = nn.Dropout()
         self.linear2 = nn.Linear(512, output_channels)
 
-    def forward(self, x, mask=None):
+    def forward(self, batch):
+        x = batch['items']
         x = x.transpose(2, 1)
         x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.bn2(self.conv2(x)))
@@ -188,7 +197,8 @@ class DGCNN(nn.Module):
         self.dp2 = nn.Dropout(p=dropout)
         self.linear3 = nn.Linear(256, output_channels)
 
-    def forward(self, x, mask=None):
+    def forward(self, batch):
+        x = batch['items']
         x = x.transpose(2, 1)
         batch_size = x.size(0)
         x = get_graph_feature(x, k=self.k)

@@ -11,7 +11,7 @@
     },
     "data": {
       "train": {
-          "batch_size": 32,
+          "batch_size": 64,
           "num_workers": 2,
           "dataset": {
               "type": "OrbitDataset",
@@ -23,7 +23,7 @@
           }
       },
       "test": {
-          "batch_size": 32,
+          "batch_size": 64,
           "num_workers": 2,
           "dataset": {
               "type": "OrbitDataset",
@@ -44,8 +44,8 @@
     "lr_scheduler": {
         "type": "LinearLR",
         "args": {
-            "start_factor": 0.2,
-            "total_iters": 250
+            "start_factor": 0.001,
+            "total_iters": 1000
         }
     },
     "loss": {
@@ -57,14 +57,12 @@
         }
     },
     "trainer": {
-        "n_epochs": 500,
+        "n_epochs": 350,
         "wandb_project": "orbit_pds",
         "run_name": "set2set_fixed_10k_500",
         "grad_norm_clip": 10,
-        "device": "cuda"
-    },
-    "collator": {
-       "type": "collate_fn"
+        "device": "cuda",
+        "n_runs": 3
     },
     "pimgr": {
         "bandwidth": 0.05,

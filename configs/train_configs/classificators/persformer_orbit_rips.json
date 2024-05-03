@@ -62,7 +62,7 @@
     "trainer": {
         "n_epochs": 200,
         "wandb_project": "orbit_pds",
-        "run_name": "orbit_rips_10k_500_persformer",
+        "run_name": "orbit_rips_10k_500_persformer_real",
         "grad_norm_clip": 10,
         "device": "cuda"
     }

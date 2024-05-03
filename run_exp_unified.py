@@ -8,6 +8,7 @@ import trainer
 import json
 from torch.utils.data import DataLoader
 import collate_fn
+import metrics
 
 
 val_functions = {
@@ -79,7 +80,21 @@ def run_exp_full(args):
             torch.save(final_model.state_dict(), f'pretrained_models/{run}_model.pth')
 
         if args.type == 'pi' or args.type == 'pd':
-            res_metrics = utils.get_metrics(trainloader2, testloader, args.type, device, final_model, pimgr)
+            # res_metrics = utils.get_metrics(trainloader2, testloader, args.type, device, final_model, pimgr)
+            res_metrics = {}
+            time = metrics.calc_inference_time(model, testloader)
+            res_metrics.update({f'time_{args.type}': time})
+
+            if args.type == 'pd':
+                pie = metrics.calc_pie_from_pd(model, testloader, pimgr)
+                w2 = metrics.calc_gudhi_W2_dist(model, testloader)
+                res_metrics.update({f'PIE_{args.type}': pie.item()})
+                res_metrics.update({'W2': w2})
+
+            elif args.type == 'pi':
+                pie = metrics.calc_pie_from_pi(model, testloader, pimgr)
+                res_metrics.update({f'PIE_{args.type}': pie.item()})
+
             f = open('result_metrics.json')
             all_metrics = json.load(f)
             dataset_name = config['data']['train']['dataset']['type']

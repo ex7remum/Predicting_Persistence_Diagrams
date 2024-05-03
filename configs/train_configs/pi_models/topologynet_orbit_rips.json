@@ -1,0 +1,66 @@
+{
+    "arch": {
+        "type": "TopologyNet",
+        "args": {
+            "k": 10,
+            "in_channels": 2,
+            "dropout": 0.1
+        }
+    },
+    "data": {
+      "train": {
+          "batch_size": 32,
+          "num_workers": 2,
+          "dataset": {
+              "type": "OrbitDataset",
+              "args": {
+                  "data_dir": "RAW/Orbit10k/orbit10000k_train.pkl",
+                  "pd_dir": "PD/rips/10000/500/Orbit_pds.pkl",
+                  "leave": 32
+              }
+          }
+      },
+      "test": {
+          "batch_size": 32,
+          "num_workers": 2,
+          "dataset": {
+              "type": "OrbitDataset",
+              "args": {
+                  "data_dir": "RAW/Orbit10k/orbit10000k_test.pkl",
+                  "pd_dir": "PD/rips/10000/500/Orbit_pds_test.pkl",
+                  "leave": 32
+              }
+          }
+      }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args": {
+            "lr": 3e-4,
+            "weight_decay": 1e-4
+        }
+    },
+    "lr_scheduler": {
+        "type": "LinearLR",
+        "args": {
+            "start_factor": 0.2,
+            "total_iters": 250
+        }
+    },
+    "loss": {
+        "type": "PIBCELoss",
+        "args": {}
+    },
+    "trainer": {
+        "n_epochs": 200,
+        "wandb_project": "orbit_pds",
+        "run_name": "topologynet_orbit10k_500",
+        "grad_norm_clip": 10,
+        "device": "cuda",
+        "n_runs": 3
+    },
+    "pimgr": {
+        "bandwidth": 0.01,
+        "im_range": [0.0, 0.9960784316062927, 0.0, 0.7381034392506136]
+    }
+}

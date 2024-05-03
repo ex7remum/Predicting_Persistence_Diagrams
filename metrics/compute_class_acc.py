@@ -1,10 +1,10 @@
 import torch
-import torch.nn as nn
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from trainer import move_batch_to_device
+import trainer
 
 
 @torch.no_grad()
@@ -69,25 +69,16 @@ def logreg_and_rfc_acc(dataloader_train, dataloader_test, device, model=None, pi
 
 # calculate accuracy of classificaiton of some model trained on pds
 @torch.no_grad()
-def calculate_accuracy_on_pd(model_pd: nn.Module, model_class: nn.Module, dataloader, on_real=True):
-    model_class.eval()
-    if model_pd is not None:
-        model_pd.eval()
+def calculate_accuracy_on_pd(model, valloader, device):
+    model.eval()
     correct = 0.
-    device = next(model_class.parameters()).device
+    val_len = len(valloader.dataset)
 
-    val_len = len(dataloader.dataset)
-
-    for batch in dataloader:
-        batch = move_batch_to_device(batch, device)
+    for batch in valloader:
+        batch = trainer.move_batch_to_device(batch, device)
         labels = batch['labels']
         with torch.no_grad():
-            if on_real:
-                logits = model_class(batch)['logits']
-            else:
-                PD_pred = model_pd(batch)['pred_pds']
-                dumb_batch = {'pds': PD_pred}
-                logits = model_class(dumb_batch)['logits']
+            logits = model(batch)['logits']
             correct += (labels == torch.argmax(logits, axis=1)).sum()
 
     val_pd_acc = correct / val_len

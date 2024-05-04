@@ -24,7 +24,7 @@ def run_exp_full(args):
         train1_dataset, train2_dataset, test_dataset = trainer.get_dataloaders(config)
 
         pimgr = trainer.get_pimgr(config)
-        if pimgr is None and (args.type == 'pd' or args.type == 'pi'):
+        if pimgr is None:
             sigma, im_range = utils.compute_pimgr_parameters(train1_dataset.pds)
             pimgr = PersistenceImageGudhi(bandwidth=sigma,
                                           resolution=[50, 50],

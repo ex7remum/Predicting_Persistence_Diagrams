@@ -27,6 +27,8 @@ def get_items_from_dataloader(dataloader, device, model=None, pimgr=None):
                 # PD model
                 out = out['pred_pds'].cpu()
                 PI = torch.from_numpy(pimgr.fit_transform(out)).to(torch.float32)
+                max_val = PI.max(dim=1, keepdim=True)[0]
+                PI = torch.where(max_val > 1e-10, PI / PI.max(dim=1, keepdim=True)[0], PI)
         
         for img in PI:
             data.append(img.numpy())
@@ -45,13 +47,22 @@ def logreg_and_rfc_acc(dataloader_train, dataloader_test, device, model=None, pi
     X_test, y_test = np.array(X_test), np.array(y_test)
     
     scaler = StandardScaler()
+
+    # added to fix overflow that sometimes occurs in PIs
+    X_train_new = scaler.fit_transform(X_train)
+    X_test_new = scaler.transform(X_test)
+
+    X_train_new[np.isinf(X_train_new)] = np.mean(X_train_new)
+    X_test_new[np.isinf(X_test_new)] = np.mean(X_train_new)
+    X_train_new[np.isnan(X_train_new)] = 0
+    X_test_new[np.isnan(X_test_new)] = 0
     
     accuracies = []
     n_estimators = [5, 20, 50, 100, 500, 1000]
     for n_estimator in n_estimators:
         rfc = RandomForestClassifier(n_estimators=n_estimator)
-        rfc.fit(scaler.fit_transform(X_train), y_train)
-        accuracies.append(rfc.score(scaler.transform(X_test), y_test))
+        rfc.fit(X_train_new, y_train)
+        accuracies.append(rfc.score(X_test_new, y_test))
 
     acc_rfc = np.max(accuracies)
     
@@ -60,8 +71,8 @@ def logreg_and_rfc_acc(dataloader_train, dataloader_test, device, model=None, pi
     Cs = [1, 5, 10, 100, 500]
     for C in Cs:
         log_reg = LogisticRegression(C=C, max_iter=1000)
-        log_reg.fit(scaler.transform(X_train), y_train)
-        accuracies.append(log_reg.score(scaler.transform(X_test), y_test))
+        log_reg.fit(X_train_new, y_train)
+        accuracies.append(log_reg.score(X_test_new, y_test))
 
     acc_logreg = np.max(accuracies)
     return acc_logreg, acc_rfc

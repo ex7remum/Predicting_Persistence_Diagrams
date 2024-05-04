@@ -25,7 +25,8 @@ class Collator(object):
 
         if self.pimgr is not None:
             PI = torch.from_numpy(self.pimgr.fit_transform(batch_pd)).to(torch.float32)
-            PI = PI / PI.max(dim=1, keepdim=True)[0]
+            max_val = PI.max(dim=1, keepdim=True)[0]
+            PI = torch.where(max_val > 1e-10, PI / PI.max(dim=1, keepdim=True)[0], PI)
         else:
             PI = None
 

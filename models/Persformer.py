@@ -54,7 +54,9 @@ class CustomPersformer(nn.Module):
         if self.is_real:
             X = batch['pds']
         else:
-            X = self.pd_model(batch)['pred_pds']
+            with torch.no_grad():
+                model_out = self.pd_model(batch)['pred_pds']
+                X = model_out.clone().detach().requires_grad_(True)
 
         mask = batch['mask']
         if mask is None:

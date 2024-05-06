@@ -58,7 +58,7 @@ def logreg_and_rfc_acc(dataloader_train, dataloader_test, device, model=None, pi
     X_test_new[np.isnan(X_test_new)] = 0
     
     accuracies = []
-    n_estimators = [5, 20, 50, 100, 500, 1000]
+    n_estimators = [5, 20, 50, 100, 500]
     for n_estimator in n_estimators:
         rfc = RandomForestClassifier(n_estimators=n_estimator)
         rfc.fit(X_train_new, y_train)
@@ -68,7 +68,7 @@ def logreg_and_rfc_acc(dataloader_train, dataloader_test, device, model=None, pi
     
     accuracies = []
 
-    Cs = [1, 5, 10, 100, 500]
+    Cs = [0.0001, 0.001, 0.1, 1, 10]
     for C in Cs:
         log_reg = LogisticRegression(C=C, max_iter=1000)
         log_reg.fit(X_train_new, y_train)

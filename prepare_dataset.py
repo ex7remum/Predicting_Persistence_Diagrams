@@ -17,6 +17,7 @@ def get_pds_from_data(dataset_type, data_path, filtration_path_name, limit=None,
     os.makedirs(filtration_path_name, exist_ok=True)
     os.makedirs(data_path, exist_ok=True)
 
+    # get dataset items and labels
     if dataset_type == "MNIST":
         dataset_train = torchvision.datasets.MNIST(root=data_path, train=True, download=True,
                                                    transform=transforms.ToTensor())
@@ -37,11 +38,11 @@ def get_pds_from_data(dataset_type, data_path, filtration_path_name, limit=None,
         else:
             random_seed = 0
 
-        gen_pds = utils.get_orbit_dataset(m_over, m, n, rr, random_seed, device)
+        gen_orbits = utils.get_orbit_dataset(m_over, m, n, rr, random_seed, device)
         dataset = []
 
         for k, (i, j) in enumerate(tqdm(list(product(range(rr), range(m))))):
-            dataset.append((gen_pds[i, j], i))
+            dataset.append((gen_orbits[i, j], i))
 
         if 'test_size' in dataset_args:
             test_size = dataset_args['test_size']
@@ -55,6 +56,48 @@ def get_pds_from_data(dataset_type, data_path, filtration_path_name, limit=None,
         with open(f'{data_path}/orbit{m*rr}k_test.pkl', 'wb') as f:
             pkl.dump(dataset_test, f)
 
+    elif dataset_type == "Dynamic3D":
+        dataset_args = kwargs['dataset_args']
+        m_over, m, n, rr = dataset_args['m_over'], dataset_args['m'], dataset_args['n'], dataset_args['rr']
+        gen_points = utils.generate_3D_dynamic(m_over=m_over, m=m, n=n)
+        dataset = []
+        for k, (i, j) in enumerate(tqdm(list(product(range(rr), range(m))))):
+            dataset.append((gen_points[i, j], i))
+        if 'test_size' in dataset_args:
+            test_size = dataset_args['test_size']
+        else:
+            test_size = 0.3
+
+        dataset_train, dataset_test = train_test_split(dataset, test_size=test_size)
+        with open(f'{data_path}/dynamic3D_train.pkl', 'wb') as f:
+            pkl.dump(dataset_train, f)
+
+        with open(f'{data_path}/dynamic3D_test.pkl', 'wb') as f:
+            pkl.dump(dataset_test, f)
+
+    elif dataset_type == "Obayashi-Hiraoka":
+        dataset_args = kwargs['dataset_args']
+        n_images = dataset_args['n_images']
+        gen_images = utils.generate_ob_hir(**dataset_args)
+        gen_images = torch.from_numpy(gen_images).to(torch.float32).unsqueeze(1)
+        labels = torch.ones(n_images)
+        labels[:n_images//2] = 0
+        dataset = []
+        for image, label in zip(gen_images, labels):
+            dataset.append((image, label))
+
+        if 'test_size' in dataset_args:
+            test_size = dataset_args['test_size']
+        else:
+            test_size = 0.3
+        dataset_train, dataset_test = train_test_split(dataset, test_size=test_size)
+        with open(f'{data_path}/ob_hir_train.pkl', 'wb') as f:
+            pkl.dump(dataset_train, f)
+
+        with open(f'{data_path}/ob_hir_test.pkl', 'wb') as f:
+            pkl.dump(dataset_test, f)
+
+    # generate PDs
     pds_train = []
     for i, (obj, label) in tqdm(enumerate(dataset_train)):
         diags = filtration_func(obj, **kwargs['filtration_func']['args'])

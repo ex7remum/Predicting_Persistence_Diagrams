@@ -1,6 +1,6 @@
 {
-    "dataset_type" : "Orbit",
-    "data_path": "RAW/Orbit10k",
+    "dataset_type" : "Dynamic3d",
+    "data_path": "RAW/Dynamic9k",
     "setup": {
         "filtration_func": {
             "type": "rips_filtration",
@@ -9,13 +9,13 @@
             }
         },
         "dataset_args": {
-          "m_over": 2400,
-          "m": 2000,
-          "n": 1000,
-          "rr": 5,
+          "m_over": 1500,
+          "m": 1000,
+          "n": 500,
+          "rr": 9,
           "random_seed": 0
         }
     },
     "limit": null,
-    "filtration_path_name": "PD/rips/10000/500"
+    "filtration_path_name": "PD/rips/9000/500"
 }

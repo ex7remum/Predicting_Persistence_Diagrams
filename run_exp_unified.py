@@ -60,8 +60,13 @@ def run_exp_full(args):
         run = trainer.init_wandb(config=config, wandb_key=args.wandb_key, run_num=n_run)
         wandb.watch(model)
 
+        if args.type == 'class':
+            trainloader = trainloader2
+        else:
+            trainloader = trainloader1
+
         final_model = trainer.train_loop(model=model,
-                                         trainloader=trainloader1,
+                                         trainloader=trainloader,
                                          valloader=testloader,
                                          optimizer=optimizer,
                                          loss_fn=loss_fn,
@@ -71,7 +76,7 @@ def run_exp_full(args):
                                          scheduler=scheduler,
                                          n_epochs=config["trainer"]["n_epochs"],
                                          clip_norm=config["trainer"]["grad_norm_clip"],
-                                         seed=0)
+                                         seed=n_run)
 
         if 'save_path' in config['trainer']:
             torch.save(final_model.state_dict(), config['trainer']['save_path'])
@@ -79,11 +84,12 @@ def run_exp_full(args):
             os.makedirs('pretrained_models', exist_ok=True)
             torch.save(final_model.state_dict(), f'pretrained_models/{run}_model.pth')
 
-        if args.type == 'pi' or args.type == 'pd':
-            # res_metrics = utils.get_metrics(trainloader2, testloader, args.type, device, final_model, pimgr)
+        if args.type == 'pi' or args.type == 'pd' or args.type == 'class':
             res_metrics = {}
-            time = metrics.calc_inference_time(model, testloader)
-            res_metrics.update({f'time_{args.type}': time})
+
+            if args.type == 'pi' or args.type == 'pd':
+                time = metrics.calc_inference_time(model, testloader)
+                res_metrics.update({f'time_{args.type}': time})
 
             if args.type == 'pd':
                 pie = metrics.calc_pie_from_pd(model, testloader, pimgr)
@@ -94,6 +100,13 @@ def run_exp_full(args):
             elif args.type == 'pi':
                 pie = metrics.calc_pie_from_pi(model, testloader, pimgr)
                 res_metrics.update({f'PIE_{args.type}': pie.item()})
+
+            else:
+                class_acc = metrics.calculate_accuracy_on_pd(model, testloader, device)
+                if model.is_real:
+                    res_metrics.update({f'acc_real_pd_class': class_acc})
+                else:
+                    res_metrics.update({f'acc_pred_pd_class': class_acc})
 
             f = open('result_metrics.json')
             all_metrics = json.load(f)

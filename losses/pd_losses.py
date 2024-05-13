@@ -40,7 +40,7 @@ def get_persistence_weights(X, q=None, max_persistence=None):
         weights = torch.ones((n_batch, n)) / n
     
     elif q in [1, 2]:
-        persistence = (X[..., 1] - X[..., 0]) ** q
+        persistence = (X[..., 1] - X[..., 0]).abs() ** q
         if max_persistence is None:
             max_persistence, _ = torch.max(persistence, axis=1, keepdims=True)
         persistence_normed_max = persistence / max_persistence

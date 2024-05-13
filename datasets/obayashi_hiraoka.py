@@ -17,7 +17,7 @@ class ObayashiHiraoka(BasePDDataset):
             if len(pd) >= self.leave:
                 lifetime = pd[:, 1] - pd[:, 0]
                 order = torch.argsort(lifetime, descending=True)
-                mask0 = mask0[order]
+                mask0 = mask0[order][:self.leave]
                 pd = pd[order][:self.leave]
 
         return {

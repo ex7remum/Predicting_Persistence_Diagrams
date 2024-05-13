@@ -19,9 +19,6 @@ def run_exp_full(args):
     for n_run in range(n_runs):
         # fix random
         seed = 54 + n_run # magic const
-        torch.backends.cudnn.deterministic = True
-        torch.use_deterministic_algorithms(True)
-        torch.backends.cudnn.benchmark = False
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
         np.random.seed(seed)

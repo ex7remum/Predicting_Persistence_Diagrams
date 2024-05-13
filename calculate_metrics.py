@@ -8,6 +8,8 @@ import json
 from torch.utils.data import DataLoader
 import collate_fn
 import metrics
+import numpy as np
+import random
 
 
 def run_exp_full(args):
@@ -15,6 +17,15 @@ def run_exp_full(args):
     config = json.load(f)
     n_runs = config['trainer']['n_runs']
     for n_run in range(n_runs):
+        # fix random
+        seed = 54 + n_run # magic const
+        torch.backends.cudnn.deterministic = True
+        torch.use_deterministic_algorithms(True)
+        torch.backends.cudnn.benchmark = False
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        np.random.seed(seed)
+        random.seed(seed)
 
         if 'device' in config['trainer']:
             device = config['trainer']['device']

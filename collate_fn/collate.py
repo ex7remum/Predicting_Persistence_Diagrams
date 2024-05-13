@@ -30,7 +30,7 @@ class Collator(object):
         else:
             PI = None
 
-        return {
+        res = {
             'labels': all_labels,
             'pds': batch_pd,
             'items': batch_items,
@@ -38,3 +38,10 @@ class Collator(object):
             'mask': mask,
             'pis': PI
         }
+
+        if 'seg_mask' in dataset_items[0]:
+            all_masks = [item['seg_mask'] for item in dataset_items]
+            batch_seg_masks = torch.stack(all_masks)
+            res.update({'seg_mask': batch_seg_masks})
+
+        return res

@@ -8,6 +8,7 @@ from models.Persformer import CustomPersformer
 from models.pc_encoders import MLPEncoder, TransformerEncoder, DGCNN, PointNet
 from models.img_encoders import SimpleCNNEncoder, Resnet18Encoder
 from models.OneShotPd import OneShotPd
+from models.RipsNet import RipsNet
 
 __all__ = [
     "ImageSet2Set",
@@ -25,5 +26,6 @@ __all__ = [
     "PointNet",
     "SimpleCNNEncoder",
     "Resnet18Encoder",
-    "OneShotPd"
+    "OneShotPd",
+    "RipsNet"
 ]

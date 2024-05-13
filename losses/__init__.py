@@ -4,6 +4,7 @@ from losses.PIMSELoss import PIMSELoss
 from losses.PIBCELoss import PIBCELoss
 from losses.CustomCELoss import CustomCELoss
 from losses.CustomMSELoss import CustomMSELoss
+from losses.DiceLoss import DiceLoss
 
 __all__ = [
    "SlicedWassersteinLoss",
@@ -14,5 +15,6 @@ __all__ = [
     "PIMSELoss",
     "PIBCELoss",
     "CustomCELoss",
-    "CustomMSELoss"
+    "CustomMSELoss",
+    "DiceLoss"
 ]

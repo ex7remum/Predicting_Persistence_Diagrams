@@ -6,8 +6,6 @@ from torchvision import transforms
 class ObayashiHiraoka(BasePDDataset):
     def __getitem__(self, idx):
         item, label = self.dataset[idx]
-        norm = transforms.Normalize((0.5,), (0.5,))
-        item = norm(item)
         pd, mask0, mask1 = self.pds[idx]
         pd, mask0, mask1 = torch.from_numpy(pd), torch.from_numpy(mask0), torch.from_numpy(mask1)
         pd = pd[pd[:, 2] == 0]

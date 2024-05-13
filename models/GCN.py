@@ -218,6 +218,7 @@ class GCN(nn.Module):
                  use_deconv=False, use_sigmoid=True,
                  num_filters=11, freeze_bn=False, **_):
         super(GCN, self).__init__()
+        self.num_classes = num_classes
         self.use_sigmoid = use_sigmoid
         self.use_deconv = use_deconv
         if use_resnet_gcn:
@@ -292,9 +293,12 @@ class GCN(nn.Module):
         if self.use_sigmoid:
             x = x.sigmoid()
 
+        print(x.shape)
         x_flatten = torch.flatten(x, start_dim=2)
-        items_flattened = torch.flatten(batch['items'], start_dim=2)
+        print(x_flatten.shape)
+        items_flattened = torch.flatten(batch['items'], start_dim=2).repeat(1, self.num_classes, 1)
         order = torch.argsort(x_flatten, dim=2, descending=True)[..., :2]
+        print(order.shape)
         pred_pds = torch.gather(items_flattened, 2, order)
         pred_pds = torch.sort(pred_pds, dim=-1)[0]
 
